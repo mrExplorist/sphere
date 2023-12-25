@@ -1,7 +1,7 @@
 "use server";
 
 import { and, eq, notExists } from "drizzle-orm";
-import { files, folders, workspaces } from "../../../migrations/schema";
+import { files, folders, users, workspaces } from "../../../migrations/schema";
 import db from "./db";
 import { Folder, Subscription, workspace } from "./supabase.types";
 import { validate } from "uuid";
@@ -96,4 +96,28 @@ export const getPrivateWorkspaces = async (userId: string) => {
       ),
     )) as workspace[];
   return privateWorkspaces;
+};
+
+
+// Query for getting collaborative workspace by user ID
+
+export const getCollaboratingWorkspaces = async (userId: string) => {
+  if (!userId) return [];
+  const collaboratedWorkspaces = (await db
+    .select({
+      id: workspaces.id,
+      createdAt: workspaces.createdAt,
+      workspaceOwner: workspaces.workspaceOwner,
+      title: workspaces.title,
+      iconId: workspaces.iconId,
+      data: workspaces.data,
+      inTrash: workspaces.inTrash,
+      logo: workspaces.logo,
+      bannerUrl: workspaces.bannerUrl,
+    })
+    .from(users)
+    .innerJoin(collaborators, eq(users.id, collaborators.userId))
+    .innerJoin(workspaces, eq(collaborators.workspaceId, workspaces.id))
+    .where(eq(users.id, userId))) as workspace[];
+  return collaboratedWorkspaces;
 };
