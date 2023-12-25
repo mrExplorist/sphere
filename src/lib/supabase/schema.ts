@@ -1,10 +1,9 @@
 import { sql } from "drizzle-orm";
 import { jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { prices, subscriptionStatus } from "../../../migrations/schema";
+import { prices, subscriptionStatus, users } from "../../../migrations/schema";
 import { integer } from "drizzle-orm/sqlite-core";
 import { boolean } from "drizzle-orm/mysql-core";
 
-//
 export const workspaces = pgTable("workspaces", {
   id: uuid("id").defaultRandom().primaryKey().notNull(),
   createdAt: timestamp("created_at", {
@@ -110,4 +109,25 @@ export const subscriptions = pgTable("subscriptions", {
     withTimezone: true,
     mode: "string",
   }).default(sql`now()`),
+});
+
+
+// Collaborators schema
+
+export const collaborators = pgTable("collaborators", {
+
+  id: uuid("id").defaultRandom().primaryKey().notNull(),
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+    mode: "string",
+  })
+    .defaultNow()
+    .notNull(),
+  userId: uuid("user_id").notNull().references(() => users.id, {onDelete: "cascade"}),
+  workspaceId: uuid("workspace_id")
+    .notNull()
+    .references(() => workspaces.id, {
+      onDelete: "cascade",
+    }),
+  role: text("role").notNull(),
 });
