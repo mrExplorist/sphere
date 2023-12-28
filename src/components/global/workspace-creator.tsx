@@ -29,6 +29,10 @@ const WorkspaceCreator = () => {
     setCollaborators([...collaborators, user]);
   };
 
+  const removeCollaborator = (user: User) => {
+    setCollaborators(collaborators.filter((c) => c.id !== user.id));
+  };
+
   return (
     <div className="flex gap-4 flex-col">
       <div>
