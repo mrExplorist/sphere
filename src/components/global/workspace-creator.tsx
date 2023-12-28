@@ -33,6 +33,36 @@ const WorkspaceCreator = () => {
     setCollaborators(collaborators.filter((c) => c.id !== user.id));
   };
 
+  const createItem = async () => {
+    setIsLoading(true);
+    const uuid = v4();
+    if (user?.id) {
+      const newWorkspace: workspace = {
+        data: null,
+        createdAt: new Date().toISOString(),
+        iconId: '💼',
+        id: uuid,
+        inTrash: '',
+        title,
+        workspaceOwner: user.id,
+        logo: null,
+        bannerUrl: '',
+      };
+      if (permissions === 'private') {
+        toast({ title: 'Success', description: 'Created the workspace' });
+        await createWorkspace(newWorkspace);
+        router.refresh();
+      }
+      if (permissions === 'shared') {
+        toast({ title: 'Success', description: 'Created the workspace' });
+        await createWorkspace(newWorkspace);
+        await addCollaborators(collaborators, uuid);
+        router.refresh();
+      }
+    }
+    setIsLoading(false);
+  };
+
   return (
     <div className="flex gap-4 flex-col">
       <div>
