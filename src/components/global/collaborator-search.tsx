@@ -24,6 +24,27 @@ const CollaboratorSearch: React.FC<CollaboratorSearchProps> = ({
 }) => {
   const { user } = useSupabaseUser();
   const [searchResults, setSearchResults] = useState<User[] | []>([]);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const getUserData = () => {};
+
+  const onChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (timerRef) clearTimeout(timerRef.current);
+    // timerRef.current = setTimeout(async () => {
+    //   const res = await getUsersFromSearch(e.target.value);
+    //   setSearchResults(res);
+    // }, 450);
+  };
+
+  const addCollaborator = (user: User) => {
+    getCollaborator(user);
+  };
 
   return (
     <Sheet>
@@ -45,7 +66,7 @@ const CollaboratorSearch: React.FC<CollaboratorSearchProps> = ({
         "
         >
           <Search />
-          <Input name="name" className="dark:bg-background" placeholder="Email" onChange={} />
+          <Input name="name" className="dark:bg-background" placeholder="Email" onChange={onChangeHandler} />
         </div>
         <ScrollArea
           className="mt-6
@@ -75,9 +96,9 @@ const CollaboratorSearch: React.FC<CollaboratorSearchProps> = ({
                     {user.email}
                   </div>
                 </div>
-                {/* <Button variant="secondary" onClick={() => addCollaborator(user)}>
+                <Button variant="secondary" onClick={() => addCollaborator(user)}>
                   Add
-                </Button> */}
+                </Button>
               </div>
             ))}
         </ScrollArea>
