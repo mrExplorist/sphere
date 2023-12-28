@@ -31,7 +31,9 @@ const CustomDialogTrigger: React.FC<CustomDialogTriggerProps> = ({
         className="h-screen
         block
         sm:h-[440px]
-        overflow-scroll
+        overflow-y-scroll
+        scrollbar scrollbar-thumb-[#030012] scrollbar-track-[#030012]
+
         w-full
       "
       >
