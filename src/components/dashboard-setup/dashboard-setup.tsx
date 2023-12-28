@@ -129,6 +129,9 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({ subscription, user }) =
             items-center
             gap-4"
             >
+              <div className="text-5xl">
+                <EmojiPicker getValue={(emoji) => setSelectedEmoji(emoji)}>{selectedEmoji}</EmojiPicker>
+              </div>
               <div className="w-full ">
                 <Label
                   htmlFor="workspaceName"
