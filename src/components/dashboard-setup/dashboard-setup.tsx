@@ -44,6 +44,69 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({ subscription, user }) =
     },
   });
 
+  const onSubmit: SubmitHandler<z.infer<typeof CreateWorkspaceFormSchema>> = async (value) => {
+    const file = value.logo?.[0];
+    let filePath = null;
+    const workspaceUUID = v4();
+    console.log(file);
+
+    if (file) {
+      try {
+        const { data, error } = await supabase.storage
+          .from('workspace-logos')
+          .upload(`workspaceLogo.${workspaceUUID}`, file, {
+            cacheControl: '3600',
+            upsert: true,
+          });
+        if (error) throw new Error('');
+        filePath = data.path;
+      } catch (error) {
+        console.log('Error', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error! Could not upload your workspace logo',
+        });
+      }
+    }
+    try {
+      const newWorkspace: workspace = {
+        data: null,
+        createdAt: new Date().toISOString(),
+        iconId: selectedEmoji,
+        id: workspaceUUID,
+        inTrash: '',
+        title: value.workspaceName,
+        workspaceOwner: user.id,
+        logo: filePath || null,
+        bannerUrl: '',
+      };
+      const { data, error: createError } = await createWorkspace(newWorkspace);
+      if (createError) {
+        throw new Error();
+      }
+      dispatch({
+        type: 'ADD_WORKSPACE',
+        payload: { ...newWorkspace, folders: [] },
+      });
+
+      toast({
+        title: 'Workspace Created',
+        description: `${newWorkspace.title} has been created successfully.`,
+      });
+
+      router.replace(`/dashboard/${newWorkspace.id}`);
+    } catch (error) {
+      console.log(error, 'Error');
+      toast({
+        variant: 'destructive',
+        title: 'Could not create your workspace',
+        description: "Oops! Something went wrong, and we couldn't create your workspace. Try again or come back later.",
+      });
+    } finally {
+      reset();
+    }
+  };
+
   return <div></div>;
 };
 
