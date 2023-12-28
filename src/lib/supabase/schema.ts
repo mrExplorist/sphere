@@ -114,20 +114,18 @@ export const subscriptions = pgTable("subscriptions", {
 
 // Collaborators schema
 
-export const collaborators = pgTable("collaborators", {
-
-  id: uuid("id").defaultRandom().primaryKey().notNull(),
-  createdAt: timestamp("created_at", {
+export const collaborators = pgTable('collaborators', {
+  id: uuid('id').defaultRandom().primaryKey().notNull(),
+  workspaceId: uuid('workspace_id')
+    .notNull()
+    .references(() => workspaces.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', {
     withTimezone: true,
-    mode: "string",
+    mode: 'string',
   })
     .defaultNow()
     .notNull(),
-  userId: uuid("user_id").notNull().references(() => users.id, {onDelete: "cascade"}),
-  workspaceId: uuid("workspace_id")
+  userId: uuid('user_id')
     .notNull()
-    .references(() => workspaces.id, {
-      onDelete: "cascade",
-    }),
-  role: text("role").notNull(),
+    .references(() => users.id, { onDelete: 'cascade' }),
 });
