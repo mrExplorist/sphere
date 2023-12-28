@@ -1,11 +1,11 @@
-"use server";
+'use server';
 
-import { and, eq, notExists } from "drizzle-orm";
-import { files, folders, users, workspaces } from "../../../migrations/schema";
-import db from "./db";
-import { Folder, Subscription, workspace } from "./supabase.types";
-import { validate } from "uuid";
-import { collaborators } from "./schema";
+import { and, eq, notExists } from 'drizzle-orm';
+import { files, folders, users, workspaces } from '../../../migrations/schema';
+import db from './db';
+import { Folder, Subscription, User, workspace } from './supabase.types';
+import { validate } from 'uuid';
+import { collaborators } from './schema';
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Queries for communicating with the database ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Query for creating a new workspace
@@ -15,7 +15,7 @@ export const createWorkspace = async (workspace: workspace) => {
     return { data: null, error: null };
   } catch (error) {
     console.log(error);
-    return { data: null, error: "Error" };
+    return { data: null, error: 'Error' };
   }
 };
 
@@ -36,17 +36,15 @@ export const getUserSubscriptionStatus = async (userId: string) => {
 // Query for getting files
 export const getFiles = async (folderId: string) => {
   const isValid = validate(folderId);
-  if (!isValid) return { data: null, error: "Error" };
+  if (!isValid) return { data: null, error: 'Error' };
   try {
-    const results = (await db
-      .select()
-      .from(files)
-      .orderBy(files.createdAt)
-      .where(eq(files.folderId, folderId))) as File[] | [];
+    const results = (await db.select().from(files).orderBy(files.createdAt).where(eq(files.folderId, folderId))) as
+      | File[]
+      | [];
     return { data: results, error: null };
   } catch (error) {
     console.log(error);
-    return { data: null, error: "Error" };
+    return { data: null, error: 'Error' };
   }
 };
 
@@ -54,7 +52,7 @@ export const getFiles = async (folderId: string) => {
 
 export const getFolders = async (workspaceId: string) => {
   const isValid = validate(workspaceId);
-  if (!isValid) return { data: null, error: "Error" };
+  if (!isValid) return { data: null, error: 'Error' };
   try {
     const results: Folder[] | [] = await db
       .select()
@@ -64,7 +62,7 @@ export const getFolders = async (workspaceId: string) => {
     return { data: results, error: null };
   } catch (error) {
     console.log(error);
-    return { data: null, error: "Error getting folders from db" };
+    return { data: null, error: 'Error getting folders from db' };
   }
 };
 
@@ -86,18 +84,12 @@ export const getPrivateWorkspaces = async (userId: string) => {
     .from(workspaces)
     .where(
       and(
-        notExists(
-          db
-            .select()
-            .from(collaborators)
-            .where(eq(collaborators.workspaceId, workspaces.id)),
-        ),
+        notExists(db.select().from(collaborators).where(eq(collaborators.workspaceId, workspaces.id))),
         eq(workspaces.workspaceOwner, userId),
       ),
     )) as workspace[];
   return privateWorkspaces;
 };
-
 
 // Query for getting collaborative workspace by user ID
 
@@ -122,7 +114,6 @@ export const getCollaboratingWorkspaces = async (userId: string) => {
   return collaboratedWorkspaces;
 };
 
-
 // Query for shared workspaces by user ID
 export const getSharedWorkspaces = async (userId: string) => {
   if (!userId) return [];
@@ -143,4 +134,17 @@ export const getSharedWorkspaces = async (userId: string) => {
     .innerJoin(collaborators, eq(workspaces.id, collaborators.workspaceId))
     .where(eq(workspaces.workspaceOwner, userId))) as workspace[];
   return sharedWorkspaces;
+};
+
+// Query for adding collaborators
+
+export const addCollaborators = async (users: User[], workspaceId: string) => {
+  const response = users.forEach(async (user: User) => {
+    // Checking if user exists
+    const userExists = await db.query.collaborators.findFirst({
+      where: (u, { eq }) => and(eq(u.userId, user.id), eq(u.workspaceId, workspaceId)),
+    });
+
+    if (!userExists) await db.insert(collaborators).values({ workspaceId, userId: user.id });
+  });
 };
