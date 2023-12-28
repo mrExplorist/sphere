@@ -25,6 +25,10 @@ const WorkspaceCreator = () => {
   const [collaborators, setCollaborators] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const addCollaborator = (user: User) => {
+    setCollaborators([...collaborators, user]);
+  };
+
   return (
     <div className="flex gap-4 flex-col">
       <div>
