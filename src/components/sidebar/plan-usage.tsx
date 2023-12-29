@@ -15,6 +15,14 @@ const PlanUsage: React.FC<PlanUsageProps> = ({ foldersLength, subscription }) =>
   const { workspaceId, state } = useAppState();
   const [usagePercentage, setUsagePercentage] = useState((foldersLength / MAX_FOLDERS_FREE_PLAN) * 100);
 
+  // Dynamically updating the usagePercentage based on the number of folders in the current workspace, considering the maximum limit allowed for the free plan.
+
+  useEffect(() => {
+    const stateFoldersLength = state.workspaces.find((workspace) => workspace.id === workspaceId)?.folders.length;
+    if (stateFoldersLength === undefined) return;
+    setUsagePercentage((stateFoldersLength / MAX_FOLDERS_FREE_PLAN) * 100);
+  }, [state, workspaceId]);
+
   return (
     <article className="mb-4">
       {subscription?.status !== 'active' && (
