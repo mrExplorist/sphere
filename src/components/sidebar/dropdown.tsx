@@ -72,6 +72,35 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
 
   //   Blur
 
+  //   Onchanges like emoji change
+
+  const onChangeEmoji = async (selectedEmoji: string) => {
+    if (!workspaceId) return;
+    if (listType === 'folder') {
+      dispatch({
+        type: 'UPDATE_FOLDER',
+        payload: {
+          workspaceId,
+          folderId: id,
+          folder: { iconId: selectedEmoji },
+        },
+      });
+      const { data, error } = await updateFolder({ iconId: selectedEmoji }, id);
+      if (error) {
+        toast({
+          title: 'Error',
+          variant: 'destructive',
+          description: 'Could not update the emoji for this folder',
+        });
+      } else {
+        toast({
+          title: 'Success',
+          description: 'Update emoji for the folder',
+        });
+      }
+    }
+  };
+
   //   Move to trash
 
   return (
@@ -99,7 +128,9 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
           justify-center
           overflow-hidden"
           >
-            <div className="relative">{/* <EmojiPicker getValue={onChangeEmoji}>{iconId}</EmojiPicker> */}</div>
+            <div className="relative">
+              <EmojiPicker getValue={onChangeEmoji}>{iconId}</EmojiPicker>
+            </div>
           </div>
         </div>
       </AccordionTrigger>
