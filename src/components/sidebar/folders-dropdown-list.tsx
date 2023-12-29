@@ -54,8 +54,41 @@ const FoldersDropDownList: FC<FoldersDropDownListProps> = ({ workspaceFolders, w
     setFolders(state.workspaces.find((workspace) => workspace.id === workspaceId)?.folders || []);
   }, [state]);
 
-  // TODO: Add Folder function
+  //  Add Folder function
 
+  const addFolderHandler = async () => {
+    if (folders.length >= 3 && !subscription) {
+      setOpen(true);
+      return;
+    }
+    const newFolder: Folder = {
+      data: null,
+      id: v4(),
+      createdAt: new Date().toISOString(),
+      title: 'Untitled',
+      iconId: '📄',
+      inTrash: null,
+      workspaceId,
+      bannerUrl: '',
+    };
+    dispatch({
+      type: 'ADD_FOLDER',
+      payload: { workspaceId, folder: { ...newFolder, files: [] } },
+    });
+    const { data, error } = await createFolder(newFolder);
+    if (error) {
+      toast({
+        title: 'Error',
+        variant: 'destructive',
+        description: 'Could not create the folder',
+      });
+    } else {
+      toast({
+        title: 'Success',
+        description: 'Created folder.',
+      });
+    }
+  };
   return (
     <div
       className="flex
@@ -81,7 +114,7 @@ const FoldersDropDownList: FC<FoldersDropDownListProps> = ({ workspaceFolders, w
       </span>
       <TooltipComponent message="Create Folder">
         <PlusIcon
-          onClick={() => {}}
+          onClick={addFolderHandler}
           size={16}
           className="group-hover/title:inline-block
             hidden
