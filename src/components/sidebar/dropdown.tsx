@@ -70,6 +70,11 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
     }
   };
 
+  //   Double click handler to edit the folder for editing
+  const handleDoubleClick = () => {
+    setIsEditing(true);
+  };
+
   //   various types and styles
 
   const isFolder = listType === 'folder';
@@ -141,6 +146,30 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
   };
 
   //   FolderTitle Change
+
+  const folderTitleChange = (e: any) => {
+    const fid = id.split('folder');
+
+    if (!workspaceId) return;
+    if (fid.length === 1) {
+      dispatch({
+        type: 'UPDATE_FOLDER',
+        payload: {
+          folder: { title },
+          folderId: fid[0],
+          workspaceId,
+        },
+      });
+    }
+  };
+
+  // FileTitle Change
+  const fileTitleChange = (e: any) => {
+    const fid = id.split('folder');
+    if (fid.length === 2 && fid[1]) {
+      // todo : update file title dispat
+    }
+  };
 
   //   Move to trash
 
