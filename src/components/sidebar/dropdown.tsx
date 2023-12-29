@@ -34,7 +34,16 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
 
   const router = useRouter();
 
-  //   FILETITLE
+  //folder Title synced with server data and local
+  const folderTitle: string | undefined = useMemo(() => {
+    if (listType === 'folder') {
+      const stateTitle = state.workspaces
+        .find((workspace) => workspace.id === workspaceId)
+        ?.folders.find((folder) => folder.id === id)?.title;
+      if (title === stateTitle || !stateTitle) return title;
+      return stateTitle;
+    }
+  }, [state, listType, workspaceId, id, title]);
 
   // Function for navigating the user to a different page
 
@@ -49,11 +58,10 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
 
   //   Add a file
 
-  //   Double click handler to edit the folder
-
   //   various types and styles
 
   const isFolder = listType === 'folder';
+
   const groupIdentifies = clsx('dark:text-white whitespace-nowrap flex justify-between items-center w-full relative', {
     'group/folder': isFolder,
     'group/file': !isFolder,
@@ -69,8 +77,6 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
       }),
     [isFolder],
   );
-
-  //   Blur
 
   //   Onchanges like emoji change
 
@@ -131,6 +137,18 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
             <div className="relative">
               <EmojiPicker getValue={onChangeEmoji}>{iconId}</EmojiPicker>
             </div>
+            {/* <input
+              type="text"
+              value={listType === 'folder' ? folderTitle : fileTitle}
+              className={clsx('outline-none overflow-hidden w-[140px] text-Neutrals/neutrals-7', {
+                'bg-muted cursor-text': isEditing,
+                'bg-transparent cursor-pointer': !isEditing,
+              })}
+              readOnly={!isEditing}
+              onDoubleClick={handleDoubleClick}
+              onBlur={handleBlur}
+              onChange={listType === 'folder' ? folderTitleChange : fileTitleChange}
+            /> */}
           </div>
         </div>
       </AccordionTrigger>
