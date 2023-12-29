@@ -15,6 +15,7 @@ import { addCollaborators, createWorkspace } from '@/lib/supabase/queries';
 import { ScrollArea } from '../ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useToast } from '../ui/use-toast';
+import CollaboratorSearch from './collaborator-search';
 
 const WorkspaceCreator = () => {
   const { user } = useSupabaseUser();
@@ -137,7 +138,8 @@ const WorkspaceCreator = () => {
       </>
       {permissions === 'shared' && (
         <div>
-          {/* <CollaboratorSearch
+          {/* Adding collaborator search functionality */}
+          <CollaboratorSearch
             existingCollaborators={collaborators}
             getCollaborator={(user) => {
               addCollaborator(user);
@@ -147,13 +149,12 @@ const WorkspaceCreator = () => {
               <Plus />
               Add Collaborators
             </Button>
-          </CollaboratorSearch> */}
+          </CollaboratorSearch>
           <div className="mt-4">
             <span className="text-sm text-muted-foreground">Collaborators {collaborators.length || ''}</span>
             <ScrollArea
               className="
             h-[120px]
-            overflow-y-scroll
             w-full
             rounded-md
             border
@@ -178,7 +179,7 @@ const WorkspaceCreator = () => {
                           gap-2
                           text-muted-foreground
                           overflow-hidden
-                          overflow-ellipsis
+
                           sm:w-[300px]
                           w-[140px]
                         "
