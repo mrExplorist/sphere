@@ -90,6 +90,27 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
     [isFolder],
   );
 
+  //   Blur
+  const handleBlur = async () => {
+    if (!isEditing) return;
+    setIsEditing(false);
+    const fId = id.split('folder');
+    if (fId?.length === 1) {
+      if (!folderTitle) return;
+      toast({
+        title: 'Success',
+        description: 'Folder title changed.',
+      });
+      await updateFolder({ title }, fId[0]);
+    }
+
+    if (fId.length === 2 && fId[1]) {
+      if (!fileTitle) return;
+
+      //   TODO: UPDATE THE FILE
+    }
+  };
+
   //   Onchanges like emoji change
 
   const onChangeEmoji = async (selectedEmoji: string) => {
@@ -118,6 +139,8 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
       }
     }
   };
+
+  //   FolderTitle Change
 
   //   Move to trash
 
@@ -149,7 +172,6 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
             <div className="relative">
               <EmojiPicker getValue={onChangeEmoji}>{iconId}</EmojiPicker>
             </div>
-
             {/* <input
               type="text"
               value={listType === 'folder' ? folderTitle : fileTitle}
