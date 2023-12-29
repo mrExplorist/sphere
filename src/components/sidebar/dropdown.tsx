@@ -201,7 +201,7 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
             <div className="relative">
               <EmojiPicker getValue={onChangeEmoji}>{iconId}</EmojiPicker>
             </div>
-            {/* <input
+            <input
               type="text"
               value={listType === 'folder' ? folderTitle : fileTitle}
               className={clsx('outline-none overflow-hidden w-[140px] text-Neutrals/neutrals-7', {
@@ -212,7 +212,7 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
               onDoubleClick={handleDoubleClick}
               onBlur={handleBlur}
               onChange={listType === 'folder' ? folderTitleChange : fileTitleChange}
-            /> */}
+            />
           </div>
         </div>
       </AccordionTrigger>
