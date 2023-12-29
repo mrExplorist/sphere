@@ -45,6 +45,20 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
     }
   }, [state, listType, workspaceId, id, title]);
 
+  //   FILETITLE
+
+  const fileTitle: string | undefined = useMemo(() => {
+    if (listType === 'file') {
+      const fileAndFolderId = id.split('folder');
+      const stateTitle = state.workspaces
+        .find((workspace) => workspace.id === workspaceId)
+        ?.folders.find((folder) => folder.id === fileAndFolderId[0])
+        ?.files.find((file) => file.id === fileAndFolderId[1])?.title;
+      if (title === stateTitle || !stateTitle) return title;
+      return stateTitle;
+    }
+  }, [state, listType, workspaceId, id, title]);
+
   // Function for navigating the user to a different page
 
   const navigatePage = (accordianId: string, listType: string) => {
@@ -55,8 +69,6 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
       router.push(`/dashboard/${workspaceId}/folder/${folderId}/file/${accordianId}`);
     }
   };
-
-  //   Add a file
 
   //   various types and styles
 
@@ -137,6 +149,7 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
             <div className="relative">
               <EmojiPicker getValue={onChangeEmoji}>{iconId}</EmojiPicker>
             </div>
+
             {/* <input
               type="text"
               value={listType === 'folder' ? folderTitle : fileTitle}
