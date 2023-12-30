@@ -8,7 +8,11 @@ import { AccordionItem, AccordionTrigger } from '../ui/accordion';
 import clsx from 'clsx';
 import EmojiPicker from '../global/emoji-picker';
 import { useToast } from '../ui/use-toast';
-import { updateFolder } from '@/lib/supabase/queries';
+import { createFile, updateFolder } from '@/lib/supabase/queries';
+import TooltipComponent from '../global/tooltip-component';
+import { PlusIcon, Trash } from 'lucide-react';
+import { v4 } from 'uuid';
+import { File } from '@/lib/supabase/supabase.types';
 
 interface DropDownProps {
   title: string;
@@ -34,7 +38,16 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
 
   const router = useRouter();
 
-  //folder Title synced with server data and local
+  // ! --------------------> FOLDER TITLE SYNCED WITH SERVER DATA AND LOCAL <----------------- !
+
+  //  & folderTitle using useMemo
+  // ~ useMemo optimizes computations by memoizing the result.
+  // ~folderTitle is the memoized string representing the title of a folder.
+  // ~The function inside useMemo checks if listType is 'folder'.
+  // ~It finds the corresponding folder in state.workspaces based on workspaceId and id.
+  // ~If the folder is found, it retrieves its title.
+  // ~If the retrieved title is the same as the current title or there is no title, it returns the current title.Otherwise, it returns the retrieved title.
+
   const folderTitle: string | undefined = useMemo(() => {
     if (listType === 'folder') {
       const stateTitle = state.workspaces
@@ -45,7 +58,15 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
     }
   }, [state, listType, workspaceId, id, title]);
 
-  //   FILETITLE
+  // ! ----------------->  FILETITLE SYNCED WITH SERVER DATA AND LOCAL <----------------- !
+
+  //  & fileTitle is memoized to represent the title of a file.
+  // ~The function inside useMemo checks if listType is 'file'.
+  // ~Extracts folder and file IDs from id.
+  // ~inds the corresponding folder and file in state.workspaces.
+  // ~Retrieves the title of the file.
+  // ~If the retrieved title is the same as the current title or there is no title, it returns the current title Otherwise, it returns the retrieved title.
+  //~ Dependencies include state, listType, workspaceId, id, and title.
 
   const fileTitle: string | undefined = useMemo(() => {
     if (listType === 'file') {
@@ -59,7 +80,7 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
     }
   }, [state, listType, workspaceId, id, title]);
 
-  // Function for navigating the user to a different page
+  //   ! ----------------->  NAVIGATE TO FOLDER OR FILE <----------------- !
 
   const navigatePage = (accordianId: string, listType: string) => {
     if (listType === 'folder') {
@@ -84,8 +105,7 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
     'group/file': !isFolder,
   });
 
-  //   The useMemo hook is used here to memoize the calculated listStyles value. Memoization helps in optimizing performance by preventing unnecessary recalculations of the listStyles value when the component re-renders. In this case, the listStyles value is dependent on the isFolder variable, and since useMemo caches the result of the computation and only recalculates it when the dependencies change, it avoids unnecessary computations during renders when isFolder remains unchanged. This can be particularly beneficial when dealing with complex or expensive calculations.
-
+  //  List styles for folder and file
   const listStyles = useMemo(
     () =>
       clsx('relative', {
@@ -95,7 +115,6 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
     [isFolder],
   );
 
-  //   Blur
   const handleBlur = async () => {
     if (!isEditing) return;
     setIsEditing(false);
@@ -145,8 +164,7 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
     }
   };
 
-  //   FolderTitle Change
-
+  //  FolderTitle Change
   const folderTitleChange = (e: any) => {
     const fid = id.split('folder');
 
@@ -155,7 +173,7 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
       dispatch({
         type: 'UPDATE_FOLDER',
         payload: {
-          folder: { title },
+          folder: { title: e.target.value },
           folderId: fid[0],
           workspaceId,
         },
@@ -171,8 +189,53 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
     }
   };
 
-  //   Move to trash
+  const hoverStyles = useMemo(
+    () =>
+      clsx('h-full hidden rounded-sm absolute right-0 items-center justify-center ', {
+        'gap-2': true,
+        'group-hover/file:block': listType === 'file',
+        'group-hover/folder:block': listType === 'folder',
+      }),
+    [isFolder],
+  );
 
+  //   Add New File
+
+  const addNewFile = async () => {
+    if (!workspaceId) return;
+    const newFile: File = {
+      folderId: id,
+      data: null,
+      createdAt: new Date().toISOString(),
+      inTrash: null,
+      title: 'Untitled',
+      iconId: '📄',
+      id: v4(),
+      workspaceId,
+      bannerUrl: '',
+    };
+    dispatch({
+      type: 'ADD_FILE',
+      payload: { file: newFile, folderId: id, workspaceId },
+    });
+    const { data, error } = await createFile(newFile);
+    if (error) {
+      toast({
+        title: 'Error',
+        variant: 'destructive',
+        description: 'Could not create a file',
+      });
+    } else {
+      toast({
+        title: 'Success',
+        description: 'File created.',
+      });
+    }
+  };
+
+  //  ! ------------------------>  MOVE TO TRASH <---------------------- !
+
+  // e.stopPropagation(); // to stop the event from bubbling up to the parent element and triggering the accordion to open/close when the user clicks on the folder title. This is because the folder title is inside the accordion trigger. If we don't stop the event from bubbling up, the accordion will open/close when the user clicks on the folder title. We don't want that to happen. We want the accordion to open/close only when the user clicks on the accordion trigger. So, we stop the event from bubbling up to the parent element.
   return (
     <AccordionItem
       value={id}
@@ -214,6 +277,25 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
               onChange={listType === 'folder' ? folderTitleChange : fileTitleChange}
             />
           </div>
+
+          <div className={hoverStyles}>
+            <TooltipComponent message="Delete Folder">
+              <Trash
+                onClick={() => {}}
+                size={15}
+                className="hover:dark:text-white dark:text-Neutrals/neutrals-7 transition-colors"
+              />
+            </TooltipComponent>
+            {listType === 'folder' && !isEditing && (
+              <TooltipComponent message="Add File">
+                <PlusIcon
+                  onClick={addNewFile}
+                  size={15}
+                  className="hover:dark:text-white dark:text-Neutrals/neutrals-7 transition-colors ml-2 "
+                />
+              </TooltipComponent>
+            )}
+          </div>
         </div>
       </AccordionTrigger>
     </AccordionItem>
@@ -221,5 +303,3 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
 };
 
 export default DropDown;
-
-// e.stopPropagation() is used to stop the event from propagating up or down the DOM hierarchy. Without it, the click event would bubble up to parent elements or propagate down to child elements. In this context, it's preventing the click event from reaching higher-level (parent) elements, ensuring that the click is only handled by the current element and its descendants. This can be useful to prevent unintended interactions or conflicts with other click handlers in the DOM.
