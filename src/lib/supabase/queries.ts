@@ -3,7 +3,7 @@
 import { and, eq, ilike, notExists } from 'drizzle-orm';
 import { files, folders, users, workspaces } from '../../../migrations/schema';
 import db from './db';
-import { Folder, Subscription, User, workspace } from './supabase.types';
+import { File, Folder, Subscription, User, workspace } from './supabase.types';
 import { validate } from 'uuid';
 import { collaborators } from './schema';
 
@@ -178,6 +178,18 @@ export const createFolder = async (folder: Folder) => {
 export const updateFolder = async (folder: Partial<Folder>, folderId: string) => {
   try {
     await db.update(folders).set(folder).where(eq(folders.id, folderId));
+    return { data: null, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: 'Error' };
+  }
+};
+
+// Create New Folder
+
+export const createFile = async (file: File) => {
+  try {
+    await db.insert(files).values(file);
     return { data: null, error: null };
   } catch (error) {
     console.log(error);
