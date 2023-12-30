@@ -4,15 +4,16 @@ import { useAppState } from '@/lib/providers/state-provider';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
 import { FC, useMemo, useState } from 'react';
-import { AccordionItem, AccordionTrigger } from '../ui/accordion';
+import { AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import clsx from 'clsx';
 import EmojiPicker from '../global/emoji-picker';
 import { useToast } from '../ui/use-toast';
-import { createFile, updateFolder } from '@/lib/supabase/queries';
+import { createFile, updateFile, updateFolder } from '@/lib/supabase/queries';
 import TooltipComponent from '../global/tooltip-component';
 import { PlusIcon, Trash } from 'lucide-react';
 import { v4 } from 'uuid';
 import { File } from '@/lib/supabase/supabase.types';
+import { useSupabaseUser } from '@/lib/providers/supabase-user-provider';
 
 interface DropDownProps {
   title: string;
@@ -28,12 +29,9 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
 
   // supabase client for queries and mutations to the database
   const supabase = createClientComponentClient();
-
-  const { state, dispatch, workspaceId, folderId } = useAppState();
-
   const { toast } = useToast();
-
-  //   To keep track of whether the user is editing the folder title or not
+  const { user } = useSupabaseUser();
+  const { state, dispatch, workspaceId, folderId } = useAppState();
   const [isEditing, setIsEditing] = useState(false);
 
   const router = useRouter();
@@ -84,10 +82,10 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
 
   const navigatePage = (accordianId: string, listType: string) => {
     if (listType === 'folder') {
-      router.push(`/dashboard/${workspaceId}/folder/${accordianId}`);
+      router.push(`/dashboard/${workspaceId}/${accordianId}`);
     }
     if (listType === 'file') {
-      router.push(`/dashboard/${workspaceId}/folder/${folderId}/file/${accordianId}`);
+      router.push(`/dashboard/${workspaceId}/${folderId}/${accordianId}`);
     }
   };
 
@@ -105,16 +103,6 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
     'group/file': !isFolder,
   });
 
-  //  List styles for folder and file
-  const listStyles = useMemo(
-    () =>
-      clsx('relative', {
-        'border-none text-md': isFolder,
-        'border-none ml-6 text-[16px] py-1': !isFolder,
-      }),
-    [isFolder],
-  );
-
   const handleBlur = async () => {
     if (!isEditing) return;
     setIsEditing(false);
@@ -130,8 +118,18 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
 
     if (fId.length === 2 && fId[1]) {
       if (!fileTitle) return;
-
-      //   TODO: UPDATE THE FILE
+      const { data, error } = await updateFile({ title: fileTitle }, fId[1]);
+      if (error) {
+        toast({
+          title: 'Error',
+          variant: 'destructive',
+          description: 'Could not update the title for this file',
+        });
+      } else
+        toast({
+          title: 'Success',
+          description: 'File title changed.',
+        });
     }
   };
 
@@ -166,9 +164,8 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
 
   //  FolderTitle Change
   const folderTitleChange = (e: any) => {
-    const fid = id.split('folder');
-
     if (!workspaceId) return;
+    const fid = id.split('folder');
     if (fid.length === 1) {
       dispatch({
         type: 'UPDATE_FOLDER',
@@ -183,16 +180,34 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
 
   // FileTitle Change
   const fileTitleChange = (e: any) => {
+    if (!workspaceId || !folderId) return;
     const fid = id.split('folder');
     if (fid.length === 2 && fid[1]) {
-      // todo : update file title dispat
+      dispatch({
+        type: 'UPDATE_FILE',
+        payload: {
+          file: { title: e.target.value },
+          folderId,
+          workspaceId,
+          fileId: fid[1],
+        },
+      });
     }
   };
 
+  //   List styles and hover styles
+  const listStyles = useMemo(
+    () =>
+      clsx('relative', {
+        'border-none text-md': isFolder,
+        'border-none ml-6 text-[16px] py-1': !isFolder,
+      }),
+    [isFolder],
+  );
+
   const hoverStyles = useMemo(
     () =>
-      clsx('h-full hidden rounded-sm absolute right-0 items-center justify-center ', {
-        'gap-2': true,
+      clsx('h-full hidden rounded-sm absolute right-0 items-center justify-center', {
         'group-hover/file:block': listType === 'file',
         'group-hover/folder:block': listType === 'folder',
       }),
@@ -233,7 +248,7 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
     }
   };
 
-  //  ! ------------------------>  MOVE TO TRASH <---------------------- !
+  //  ! ------------------------------------------>  MOVE TO TRASH <------------------------------------------- !
 
   // e.stopPropagation(); // to stop the event from bubbling up to the parent element and triggering the accordion to open/close when the user clicks on the folder title. This is because the folder title is inside the accordion trigger. If we don't stop the event from bubbling up, the accordion will open/close when the user clicks on the folder title. We don't want that to happen. We want the accordion to open/close only when the user clicks on the accordion trigger. So, we stop the event from bubbling up to the parent element.
   return (
@@ -277,27 +292,32 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
               onChange={listType === 'folder' ? folderTitleChange : fileTitleChange}
             />
           </div>
-
           <div className={hoverStyles}>
             <TooltipComponent message="Delete Folder">
-              <Trash
-                onClick={() => {}}
-                size={15}
-                className="hover:dark:text-white dark:text-Neutrals/neutrals-7 transition-colors"
-              />
+              <div></div>
             </TooltipComponent>
             {listType === 'folder' && !isEditing && (
               <TooltipComponent message="Add File">
                 <PlusIcon
                   onClick={addNewFile}
                   size={15}
-                  className="hover:dark:text-white dark:text-Neutrals/neutrals-7 transition-colors ml-2 "
+                  className="hover:dark:text-white dark:text-Neutrals/neutrals-7 transition-colors"
                 />
               </TooltipComponent>
             )}
           </div>
         </div>
       </AccordionTrigger>
+      <AccordionContent>
+        {state.workspaces
+          .find((workspace) => workspace.id === workspaceId)
+          ?.folders.find((folder) => folder.id === id)
+          ?.files.filter((file) => !file.inTrash)
+          .map((file) => {
+            const customFileId = `${id}folder${file.id}`;
+            return <DropDown key={file.id} title={file.title} listType="file" id={customFileId} iconId={file.iconId} />;
+          })}
+      </AccordionContent>
     </AccordionItem>
   );
 };
