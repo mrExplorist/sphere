@@ -1,35 +1,29 @@
 'use client';
-
 import { useAppState } from '@/lib/providers/state-provider';
 import { Folder } from '@/lib/supabase/supabase.types';
-import { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import TooltipComponent from '../global/tooltip-component';
 import { PlusIcon } from 'lucide-react';
-
+import { useSupabaseUser } from '@/lib/providers/supabase-user-provider';
 import { v4 } from 'uuid';
 import { createFolder } from '@/lib/supabase/queries';
-import { useSupabaseUser } from '@/lib/providers/supabase-user-provider';
 import { useToast } from '../ui/use-toast';
+import { Accordion } from '../ui/accordion';
+import DropDown from './dropdown';
 
-interface FoldersDropDownListProps {
+interface FoldersDropdownListProps {
   workspaceFolders: Folder[];
   workspaceId: string;
 }
 
-const FoldersDropDownList: FC<FoldersDropDownListProps> = ({ workspaceFolders, workspaceId }) => {
-  // TODO:Local state folders
+const FoldersDropdownList: React.FC<FoldersDropdownListProps> = ({ workspaceFolders, workspaceId }) => {
+  const { state, dispatch, folderId } = useAppState();
 
-  //  TODO: Real time updates
-  const { state, dispatch } = useAppState();
-  const [folders, setFolders] = useState(workspaceFolders);
-
-  const { subscription } = useSupabaseUser();
   const { toast } = useToast();
+  const [folders, setFolders] = useState(workspaceFolders);
+  const { subscription } = useSupabaseUser();
 
-  const [open, setOpen] = useState(false);
-
-  // Update the state with the latest information about folders. It ensures that the files property of each folder is synchronized with the global state, preventing data inconsistencies and ensuring that the local state accurately reflects the state of the application.
-
+  //effec set nitial satte server app state
   useEffect(() => {
     if (workspaceFolders.length > 0) {
       dispatch({
@@ -47,18 +41,15 @@ const FoldersDropDownList: FC<FoldersDropDownListProps> = ({ workspaceFolders, w
       });
     }
   }, [workspaceFolders, workspaceId]);
-
-  // Update local 'folders' state based on the latest 'workspaces' data in response to changes in the global 'state' object.
+  //state
 
   useEffect(() => {
     setFolders(state.workspaces.find((workspace) => workspace.id === workspaceId)?.folders || []);
   }, [state]);
 
-  //  Add Folder function
-
+  //add folder
   const addFolderHandler = async () => {
     if (folders.length >= 3 && !subscription) {
-      setOpen(true);
       return;
     }
     const newFolder: Folder = {
@@ -89,42 +80,52 @@ const FoldersDropDownList: FC<FoldersDropDownListProps> = ({ workspaceFolders, w
       });
     }
   };
+
   return (
-    <div
-      className="flex
-  sticky
-  z-20
-  top-0
-  bg-background
-  w-full
-  h-10
-  group/title
-  justify-between
-  items-center
-  pr-4
-  text-Neutrals/neutrals-8
-"
-    >
-      <span
-        className="text-Neutrals-8
+    <>
+      <div
+        className="flex
+        sticky
+        z-20
+        top-0
+        bg-background
+        w-full
+        h-10
+        group/title
+        justify-between
+        items-center
+        pr-4
+        text-Neutrals/neutrals-8
+  "
+      >
+        <span
+          className="text-Neutrals-8
         font-bold
         text-xs"
-      >
-        FOLDERS
-      </span>
-      <TooltipComponent message="Create Folder">
-        <PlusIcon
-          onClick={addFolderHandler}
-          size={16}
-          className="group-hover/title:inline-block
+        >
+          FOLDERS
+        </span>
+        <TooltipComponent message="Create Folder">
+          <PlusIcon
+            onClick={addFolderHandler}
+            size={16}
+            className="group-hover/title:inline-block
             hidden
             cursor-pointer
             hover:dark:text-white
           "
-        />
-      </TooltipComponent>
-    </div>
+          />
+        </TooltipComponent>
+      </div>
+      <Accordion type="multiple" defaultValue={[folderId || '']} className="pb-20">
+        {folders
+          .filter((folder) => !folder.inTrash)
+          .map((folder) => (
+            <DropDown key={folder.id} id={folder.id} title={folder.title} listType="folder" iconId={folder.iconId} />
+          ))}
+      </Accordion>
+    </>
   );
 };
 
-export default FoldersDropDownList;
+export default FoldersDropdownList;
