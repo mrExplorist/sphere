@@ -156,7 +156,7 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
       } else {
         toast({
           title: 'Success',
-          description: 'Update emoji for the folder',
+          description: ' i for the folder',
         });
       }
     }
@@ -243,12 +243,72 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
     } else {
       toast({
         title: 'Success',
-        description: 'File created.',
+        description: '✅ File created.',
       });
     }
   };
 
   //  ! ------------------------------------------>  MOVE TO TRASH <------------------------------------------- !
+
+  const moveToTrash = async () => {
+    if (!user || !workspaceId) return;
+    const pathId = id.split('folder');
+
+    // pathId[0] is workspaceId, pathId[1] is folderId and pathId[2] is fileId if it is a file else undefined if it is a folder
+
+    if (listType === 'folder') {
+      // ! ------------------------------------------>  MOVE FOLDER TO TRASH <------------------------------------------- !
+
+      dispatch({
+        type: 'UPDATE_FOLDER',
+        payload: {
+          folder: { inTrash: `Deleted by ${user?.email}` },
+          folderId: pathId[0],
+          workspaceId,
+        },
+      });
+
+      const { data, error } = await updateFolder({ inTrash: `Deleted by ${user?.email}` }, pathId[0]);
+
+      if (error) {
+        toast({
+          title: 'Error',
+          variant: 'destructive',
+          description: 'Could not move the folder to trash',
+        });
+      } else {
+        toast({
+          title: 'Success',
+          description: '✅ Folder moved to trash.',
+        });
+      }
+    }
+
+    if (listType === 'file') {
+      dispatch({
+        type: 'UPDATE_FILE',
+        payload: {
+          file: { inTrash: `Deleted by ${user?.email}` },
+          folderId: pathId[0],
+          workspaceId,
+          fileId: pathId[1],
+        },
+      });
+      const { data, error } = await updateFile({ inTrash: `Deleted by ${user?.email}` }, pathId[1]);
+      if (error) {
+        toast({
+          title: 'Error',
+          variant: 'destructive',
+          description: 'Could not move the file to trash',
+        });
+      } else {
+        toast({
+          title: 'Success',
+          description: '✅ Moved file to trash.',
+        });
+      }
+    }
+  };
 
   // e.stopPropagation(); // to stop the event from bubbling up to the parent element and triggering the accordion to open/close when the user clicks on the folder title. This is because the folder title is inside the accordion trigger. If we don't stop the event from bubbling up, the accordion will open/close when the user clicks on the folder title. We don't want that to happen. We want the accordion to open/close only when the user clicks on the accordion trigger. So, we stop the event from bubbling up to the parent element.
   return (
@@ -294,7 +354,11 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
           </div>
           <div className={hoverStyles}>
             <TooltipComponent message="Delete Folder">
-              <div></div>
+              <Trash
+                onClick={moveToTrash}
+                size={15}
+                className="hover:dark:text-white dark:text-Neutrals/neutrals-7 transition-colors"
+              />
             </TooltipComponent>
             {listType === 'folder' && !isEditing && (
               <TooltipComponent message="Add File">
