@@ -110,6 +110,21 @@ const SettingsForm: FC<SettingsFormProps> = ({}) => {
     }, 500);
   };
 
+  //   onChangeWorkspace Logo
+
+  const onChangeWorkspaceLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!workspaceId) return;
+
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const uuid = v4();
+    setUploadingLogo(true);
+    const { data, error } = await supabase.storage.from('workspace-logos').upload(`workspaceLogo.${uuid}`, file, {
+      cacheControl: '3600',
+      upsert: true,
+    });
+  };
+
   // onClicks
 
   // fetch avatar details
@@ -144,7 +159,7 @@ const SettingsForm: FC<SettingsFormProps> = ({}) => {
           type="file"
           accept="image/*"
           placeholder="Workspace Logo"
-          //   onChange={onChangeWorkspaceLogo}
+          onChange={onChangeWorkspaceLogo}
           //   todo: subscription check
           disabled={uploadingLogo}
         />
