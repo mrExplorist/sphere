@@ -11,7 +11,7 @@ import { Briefcase, CreditCard, ExternalLink, Lock, Plus, Share, UserIcon } from
 import { Separator } from '../ui/separator';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
-import { addCollaborators, removeCollaborators, updateWorkspace } from '@/lib/supabase/queries';
+import { addCollaborators, deleteWorkspace, removeCollaborators, updateWorkspace } from '@/lib/supabase/queries';
 import { v4 } from 'uuid';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -279,71 +279,6 @@ const SettingsForm: FC<SettingsFormProps> = ({}) => {
             </div>
           </div>
         )}
-        <Alert variant={'destructive'}>
-          <AlertDescription>
-            Warning! deleting you workspace will permanantly delete all data related to this workspace.
-          </AlertDescription>
-          <Button
-            type="submit"
-            size={'sm'}
-            variant={'destructive'}
-            className="mt-4
-            text-sm
-            bg-destructive/40
-            border-2
-            border-destructive"
-            onClick={async () => {
-              if (!workspaceId) return;
-              //   await deleteWorkspace(workspaceId);
-              toast({ title: 'Successfully deleted your workspae' });
-              dispatch({ type: 'DELETE_WORKSPACE', payload: workspaceId });
-              router.replace('/dashboard');
-            }}
-          >
-            Delete Workspace
-          </Button>
-        </Alert>
-        <p className="flex items-center gap-2 mt-6">
-          <UserIcon size={20} /> Profile
-        </p>
-        <Separator />
-        <div className="flex items-center">
-          <Avatar>
-            <AvatarImage src={''} />
-            <AvatarFallback>
-              <SphereProfileIcon />
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col ml-6">
-            <small className="text-muted-foreground cursor-not-allowed">{user ? user.email : ''}</small>
-            <Label htmlFor="profilePicture" className="text-sm text-muted-foreground">
-              Profile Picture
-            </Label>
-            <Input
-              name="profilePicture"
-              type="file"
-              accept="image/*"
-              placeholder="Profile Picture"
-              // onChange={onChangeProfilePicture}
-              disabled={uploadingProfilePic}
-            />
-          </div>
-        </div>
-        {/* <LogoutButton>
-          <div className="flex items-center">
-            <LogOut />
-          </div>
-        </LogoutButton> */}
-        <p className="flex items-center gap-2 mt-6">
-          <CreditCard size={20} /> Billing & Plan
-        </p>
-        <Separator />
-        {/* <p className="text-muted-foreground">
-          You are currently on a {subscription?.status === 'active' ? 'Pro' : 'Free'} Plan
-        </p> */}
-        <Link href="/" target="_blank" className="text-muted-foreground flex flex-row items-center gap-2">
-          View Plans <ExternalLink size={16} />
-        </Link>
       </>
     </div>
   );
