@@ -79,6 +79,19 @@ export const getFolders = async (workspaceId: string) => {
   }
 };
 
+// Query for getting workspace details by workspace ID
+export const getWorkspaceDetails = async (workspaceId: string) => {
+  const isValid = validate(workspaceId);
+  if (!isValid) return { data: [], error: 'Error' };
+  try {
+    const response = (await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1)) as workspace[];
+    return { data: response, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: 'Error getting workspace details from db' };
+  }
+};
+
 // Query for getting private workspace by user ID
 export const getPrivateWorkspaces = async (userId: string) => {
   if (!userId) return [];
