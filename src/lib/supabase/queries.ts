@@ -6,6 +6,7 @@ import db from './db';
 import { File, Folder, Subscription, User, workspace } from './supabase.types';
 import { validate } from 'uuid';
 import { collaborators } from './schema';
+import { revalidatePath } from 'next/cache';
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Queries for communicating with the database ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Query for creating a new workspace
@@ -163,7 +164,7 @@ export const getUsersFromSearch = async (email: string) => {
   return accounts;
 };
 
-// Create Folder
+// Create folder
 export const createFolder = async (folder: Folder) => {
   try {
     const results = await db.insert(folders).values(folder);
@@ -178,6 +179,23 @@ export const createFolder = async (folder: Folder) => {
 export const updateFolder = async (folder: Partial<Folder>, folderId: string) => {
   try {
     await db.update(folders).set(folder).where(eq(folders.id, folderId));
+    return { data: null, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: 'Error' };
+  }
+};
+
+// update the workspace
+
+export const updateWorkspace = async (workspace: Partial<workspace>, workspaceId: string) => {
+  if (!workspaceId) return;
+
+  try {
+    await db.update(workspaces).set(workspace).where(eq(workspaces.id, workspaceId));
+
+    revalidatePath(`/dashboard/${workspaceId}`);
+
     return { data: null, error: null };
   } catch (error) {
     console.log(error);
