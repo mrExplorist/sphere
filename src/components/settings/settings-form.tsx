@@ -279,6 +279,30 @@ const SettingsForm: FC<SettingsFormProps> = ({}) => {
             </div>
           </div>
         )}
+        <Alert variant={'destructive'}>
+          <AlertDescription>
+            Warning! deleting you workspace will permanantly delete all data related to this workspace.
+          </AlertDescription>
+          <Button
+            type="submit"
+            size={'sm'}
+            variant={'destructive'}
+            className="mt-4
+            text-sm
+            bg-destructive/40
+            border-2
+            border-destructive"
+            onClick={async () => {
+              if (!workspaceId) return;
+              await deleteWorkspace(workspaceId);
+              toast({ title: 'Successfully deleted your workspae' });
+              dispatch({ type: 'DELETE_WORKSPACE', payload: workspaceId });
+              router.replace('/dashboard');
+            }}
+          >
+            Delete Workspace
+          </Button>
+        </Alert>
       </>
     </div>
   );
