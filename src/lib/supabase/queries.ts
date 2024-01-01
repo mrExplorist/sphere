@@ -150,6 +150,22 @@ export const addCollaborators = async (users: User[], workspaceId: string) => {
   });
 };
 
+// Query for removing collaborastors
+
+export const removeCollaborators = async (users: User[], workspaceId: string) => {
+  const response = users.forEach(async (user: User) => {
+    // Checking if user exists
+    const userExists = await db.query.collaborators.findFirst({
+      where: (u, { eq }) => and(eq(u.userId, user.id), eq(u.workspaceId, workspaceId)),
+    });
+
+    if (userExists)
+      await db
+        .delete(collaborators)
+        .where(and(eq(collaborators.userId, user.id), eq(collaborators.workspaceId, workspaceId)));
+  });
+};
+
 // Query for getUser from search
 
 export const getUsersFromSearch = async (email: string) => {
