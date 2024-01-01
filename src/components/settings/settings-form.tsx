@@ -80,7 +80,34 @@ const SettingsForm: FC<SettingsFormProps> = ({}) => {
 
     await removeCollaborators([user], workspaceId);
     setCollaborators(collaborators.filter((c) => c.id !== user.id));
+
+    // to refresh our workspace categories
     router.refresh();
+  };
+
+  //   onchange
+
+  const workspaceNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!workspaceId || e.target.value) return;
+
+    dispatch({
+      type: 'UPDATE_WORKSPACE',
+      payload: {
+        workspace: { title: e.target.value },
+        workspaceId: workspaceId,
+      },
+    });
+
+    if (titleTimerRef.current) clearTimeout(titleTimerRef.current);
+
+    titleTimerRef.current = setTimeout(async () => {
+      await updateWorkspace(
+        {
+          title: e.target.value,
+        },
+        workspaceId,
+      );
+    }, 500);
   };
 
   // onClicks
@@ -107,7 +134,7 @@ const SettingsForm: FC<SettingsFormProps> = ({}) => {
           name="workspaceName"
           value={workspaceDetails ? workspaceDetails.title : ''}
           placeholder="Workspace Name"
-          //   onChange={workspaceNameChange}
+          onChange={workspaceNameChange}
         />
         <Label htmlFor="workspaceLogo" className="text-sm text-muted-foreground">
           Workspace Logo
