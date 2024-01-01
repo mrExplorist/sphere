@@ -20,6 +20,18 @@ export const createWorkspace = async (workspace: workspace) => {
   }
 };
 
+// Query for deleting a workspace
+export const deleteWorkspace = async (workspaceId: string) => {
+  if (!workspaceId) return;
+  try {
+    const response = await db.delete(workspaces).where(eq(workspaces.id, workspaceId));
+    return { data: null, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: 'Error' };
+  }
+};
+
 // Query for getting user subscription status
 export const getUserSubscriptionStatus = async (userId: string) => {
   try {
