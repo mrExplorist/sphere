@@ -6,12 +6,25 @@ import db from './db';
 import { File, Folder, Subscription, User, workspace } from './supabase.types';
 import { validate } from 'uuid';
 import { collaborators } from './schema';
+import { revalidatePath } from 'next/cache';
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Queries for communicating with the database ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Query for creating a new workspace
 export const createWorkspace = async (workspace: workspace) => {
   try {
     const response = await db.insert(workspaces).values(workspace);
+    return { data: null, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: 'Error' };
+  }
+};
+
+// Query for deleting a workspace
+export const deleteWorkspace = async (workspaceId: string) => {
+  if (!workspaceId) return;
+  try {
+    const response = await db.delete(workspaces).where(eq(workspaces.id, workspaceId));
     return { data: null, error: null };
   } catch (error) {
     console.log(error);
@@ -149,6 +162,22 @@ export const addCollaborators = async (users: User[], workspaceId: string) => {
   });
 };
 
+// Query for removing collaborastors
+
+export const removeCollaborators = async (users: User[], workspaceId: string) => {
+  const response = users.forEach(async (user: User) => {
+    // Checking if user exists
+    const userExists = await db.query.collaborators.findFirst({
+      where: (u, { eq }) => and(eq(u.userId, user.id), eq(u.workspaceId, workspaceId)),
+    });
+
+    if (userExists)
+      await db
+        .delete(collaborators)
+        .where(and(eq(collaborators.userId, user.id), eq(collaborators.workspaceId, workspaceId)));
+  });
+};
+
 // Query for getUser from search
 
 export const getUsersFromSearch = async (email: string) => {
@@ -163,7 +192,7 @@ export const getUsersFromSearch = async (email: string) => {
   return accounts;
 };
 
-// Create Folder
+// Create folder
 export const createFolder = async (folder: Folder) => {
   try {
     const results = await db.insert(folders).values(folder);
@@ -178,6 +207,23 @@ export const createFolder = async (folder: Folder) => {
 export const updateFolder = async (folder: Partial<Folder>, folderId: string) => {
   try {
     await db.update(folders).set(folder).where(eq(folders.id, folderId));
+    return { data: null, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: 'Error' };
+  }
+};
+
+// update the workspace
+
+export const updateWorkspace = async (workspace: Partial<workspace>, workspaceId: string) => {
+  if (!workspaceId) return;
+
+  try {
+    await db.update(workspaces).set(workspace).where(eq(workspaces.id, workspaceId));
+
+    revalidatePath(`/dashboard/${workspaceId}`);
+
     return { data: null, error: null };
   } catch (error) {
     console.log(error);
