@@ -1,6 +1,6 @@
 'use client';
 
-import { FC, useRef, useState } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 import { useToast } from '../ui/use-toast';
 import { useAppState } from '@/lib/providers/state-provider';
 import { User, workspace } from '@/lib/supabase/supabase.types';
@@ -88,7 +88,7 @@ const SettingsForm: FC<SettingsFormProps> = ({}) => {
   //   onchange
 
   const workspaceNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!workspaceId || e.target.value) return;
+    if (!workspaceId || !e.target.value) return;
 
     dispatch({
       type: 'UPDATE_WORKSPACE',
@@ -125,11 +125,16 @@ const SettingsForm: FC<SettingsFormProps> = ({}) => {
     });
   };
 
-  // onClicks
+  // FETCH: Get workspace details
+  useEffect(() => {
+    const showingWorkspace = state.workspaces.find((workspace) => workspace.id === workspaceId);
 
-  // fetch avatar details
-  // get workspace details
-  // get workspace details
+    // Setting the workspace details in the state for the settings form to use
+    if (showingWorkspace) setWorkspaceDetails(showingWorkspace);
+  }, [workspaceId, state]);
+
+  //TODO:  fetch avatar details
+
   // get all the collaborators
 
   // TODO: payment portal redirects --- FOR STRIPE PAYMENTS
