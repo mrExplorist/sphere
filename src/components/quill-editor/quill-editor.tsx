@@ -95,6 +95,62 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
 
   return (
     <>
+      <div className="relative">
+        {details.inTrash && (
+          <article
+            className="py-2
+          z-40
+          bg-[#EB5757]
+          flex
+          md:flex-row
+          flex-col
+          justify-center
+          items-center
+          gap-4
+          flex-wrap"
+          >
+            <div
+              className="flex
+            flex-col
+            md:flex-row
+            gap-2
+            justify-center
+            items-center"
+            >
+              <span className="text-white">This {dirType} is in the trash.</span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-transparent
+                border-white
+                text-white
+                hover:bg-white
+                hover:text-[#EB5757]
+                "
+                // onClick={restoreFileHandler}
+              >
+                Restore
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-transparent
+                border-white
+                text-white
+                hover:bg-white
+                hover:text-[#EB5757]
+                "
+                // onClick={deleteFileHandler}
+              >
+                Delete
+              </Button>
+            </div>
+
+            <span className="text-sm text-white">{details.inTrash}</span>
+          </article>
+        )}
+      </div>
       <div className="flex justify-center items-center flex-col mt-2 relative ">
         <div id="container" className="max-w-[800px] align-right" ref={wrapperRef}></div>
       </div>
