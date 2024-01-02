@@ -291,3 +291,22 @@ export const updateFile = async (file: Partial<File>, fileId: string) => {
     return { data: null, error: 'Error' };
   }
 };
+
+export const deleteFile = async (fileId: string) => {
+  if (!fileId) return;
+  await db.delete(files).where(eq(files.id, fileId));
+};
+
+// Get file details
+
+export const getFileDetails = async (fileId: string) => {
+  const isValid = validate(fileId);
+
+  try {
+    const response = (await db.select().from(files).where(eq(files.id, fileId)).limit(1)) as File[];
+
+    return { data: response, error: null };
+  } catch (error) {
+    return { data: [], error: 'Error' };
+  }
+};
