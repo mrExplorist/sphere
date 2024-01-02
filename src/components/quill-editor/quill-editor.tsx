@@ -7,6 +7,9 @@ import 'quill/dist/quill.snow.css';
 import { Button } from '../ui/button';
 import { deleteFile, deleteFolder, updateFile, updateFolder } from '@/lib/supabase/queries';
 import { usePathname, useRouter } from 'next/navigation';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Badge } from '../ui/badge';
 
 interface QuillEditorProps {
   dirDetails: File | Folder | workspace;
@@ -44,6 +47,16 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
   const router = useRouter();
 
   const pathname = usePathname();
+
+  const [collaborators, setCollaborators] = useState<{ id: string; email: string; avatarUrl: string }[]>([
+    {
+      id: '1',
+      email: 'lksharma@gmail.com',
+      avatarUrl: 'https://i.pravatar.cc/150?img=1',
+    },
+  ]);
+
+  const [saving, setSaving] = useState(false);
 
   // we need to get directory details and need to sync it with server and client side data
 
@@ -265,8 +278,68 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
         p-8"
         >
           <div>{breadCrumbs}</div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center h-10">
+              {collaborators?.map((collaborator) => (
+                <TooltipProvider key={collaborator.id}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Avatar
+                        className="
+                    -ml-3
+                    bg-background
+                    border-2
+                    flex
+                    items-center
+                    justify-center
+                    border-white
+                    h-8
+                    w-8
+                    rounded-full
+                    "
+                      >
+                        <AvatarImage
+                          src={collaborator.avatarUrl ? collaborator.avatarUrl : ''}
+                          className="rounded-full"
+                        />
+                        <AvatarFallback>{collaborator.email.substring(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                    </TooltipTrigger>
+                    <TooltipContent>{collaborator.email}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ))}
+            </div>
+            {saving ? (
+              <Badge
+                variant="secondary"
+                className="bg-orange-600 top-4
+                text-white
+                right-4
+                z-50
+                "
+              >
+                Saving...
+              </Badge>
+            ) : (
+              <Badge
+                variant="secondary"
+                className="bg-emerald-600
+                top-4
+              text-white
+              right-4
+              z-50
+              "
+              >
+                Saved
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* {details.bannerUrl && <></>} */}
+
       <div className="flex justify-center items-center flex-col mt-2 relative ">
         <div id="container" className="max-w-[800px] align-right" ref={wrapperRef}></div>
       </div>
