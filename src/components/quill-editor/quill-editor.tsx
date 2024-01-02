@@ -6,7 +6,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import 'quill/dist/quill.snow.css';
 import { Button } from '../ui/button';
 import { deleteFile, deleteFolder, updateFile, updateFolder } from '@/lib/supabase/queries';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 interface QuillEditorProps {
   dirDetails: File | Folder | workspace;
@@ -43,6 +43,8 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
 
   const router = useRouter();
 
+  const pathname = usePathname();
+
   // we need to get directory details and need to sync it with server and client side data
 
   const details = useMemo(() => {
@@ -75,6 +77,36 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
       bannerUrl: dirDetails.bannerUrl,
     } as workspace | Folder | File;
   }, [state, workspaceId, folderId]);
+
+  //   BreadCrumbs handler for folder and file
+
+  const breadCrumbs = useMemo(() => {
+    if (!pathname || !workspaceId || !state.workspaces) return;
+
+    const segments = pathname.split('/').filter((val) => val !== 'dashboard' && val);
+
+    // workspace details
+    const workspaceDetails = state.workspaces.find((w) => w.id === workspaceId);
+
+    const workspaceBreadCrumb = workspaceDetails ? `${workspaceDetails.iconId} ${workspaceDetails.title}` : '';
+    if (segments.length === 1) {
+      return workspaceBreadCrumb;
+    }
+
+    const folderSegment = segments[1];
+    const folderDetails = workspaceDetails?.folders.find((folder) => folder.id === folderSegment);
+    const folderBreadCrumb = folderDetails ? `/ ${folderDetails.iconId} ${folderDetails.title}` : '';
+
+    if (segments.length === 2) {
+      return `${workspaceBreadCrumb} ${folderBreadCrumb}`;
+    }
+
+    const fileSegment = segments[2];
+    const fileDetails = folderDetails?.files.find((file) => file.id === fileSegment);
+    const fileBreadCrumb = fileDetails ? `/ ${fileDetails.iconId} ${fileDetails.title}` : '';
+
+    return `${workspaceBreadCrumb} ${folderBreadCrumb} ${fileBreadCrumb}`;
+  }, [state, pathname, workspaceId]);
 
   //   wrapper Ref
 
@@ -221,6 +253,19 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
             <span className="text-sm text-white">{details.inTrash}</span>
           </article>
         )}
+
+        <div
+          className="flex
+        flex-col-reverse
+        sm:flex-row
+        sm:justify-between
+        justify-center
+        sm:items-center
+        sm:p-2
+        p-8"
+        >
+          <div>{breadCrumbs}</div>
+        </div>
       </div>
       <div className="flex justify-center items-center flex-col mt-2 relative ">
         <div id="container" className="max-w-[800px] align-right" ref={wrapperRef}></div>
