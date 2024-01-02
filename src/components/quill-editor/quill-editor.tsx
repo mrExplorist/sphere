@@ -5,6 +5,7 @@ import { File, Folder, workspace } from '@/lib/supabase/supabase.types';
 import React, { useCallback, useMemo, useState } from 'react';
 import 'quill/dist/quill.snow.css';
 import { Button } from '../ui/button';
+import { updateFile, updateFolder } from '@/lib/supabase/queries';
 
 interface QuillEditorProps {
   dirDetails: File | Folder | workspace;
@@ -93,6 +94,50 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
     }
   }, []);
 
+  //   Restore file handler
+  const restoreFileHandler = async () => {
+    if (dirType === 'file') {
+      if (!folderId || !workspaceId) return;
+      dispatch({
+        type: 'UPDATE_FILE',
+        payload: {
+          fileId,
+          folderId,
+          workspaceId,
+          file: {
+            inTrash: '',
+          },
+        },
+      });
+
+      await updateFile(
+        {
+          inTrash: '',
+        },
+        fileId,
+      );
+    }
+    if (dirType === 'folder') {
+      if (!workspaceId) return;
+      dispatch({
+        type: 'UPDATE_FOLDER',
+        payload: {
+          folderId: fileId,
+          workspaceId,
+          folder: {
+            inTrash: '',
+          },
+        },
+      });
+      await updateFolder(
+        {
+          inTrash: '',
+        },
+        fileId,
+      );
+    }
+  };
+
   return (
     <>
       <div className="relative">
@@ -127,7 +172,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
                 hover:bg-white
                 hover:text-[#EB5757]
                 "
-                // onClick={restoreFileHandler}
+                onClick={restoreFileHandler}
               >
                 Restore
               </Button>
