@@ -5,7 +5,8 @@ import { File, Folder, workspace } from '@/lib/supabase/supabase.types';
 import React, { useCallback, useMemo, useState } from 'react';
 import 'quill/dist/quill.snow.css';
 import { Button } from '../ui/button';
-import { updateFile, updateFolder } from '@/lib/supabase/queries';
+import { deleteFile, deleteFolder, updateFile, updateFolder } from '@/lib/supabase/queries';
+import { useRouter } from 'next/navigation';
 
 interface QuillEditorProps {
   dirDetails: File | Folder | workspace;
@@ -39,6 +40,8 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
 
   //  For mounting quill editor
   const [quill, setQuill] = useState<any>();
+
+  const router = useRouter();
 
   // we need to get directory details and need to sync it with server and client side data
 
@@ -138,6 +141,29 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
     }
   };
 
+  //   Delete file handler
+
+  const deleteFileHandler = async () => {
+    if (dirType === 'file') {
+      if (!folderId || !workspaceId) return;
+      dispatch({
+        type: 'DELETE_FILE',
+        payload: { fileId, folderId, workspaceId },
+      });
+      await deleteFile(fileId);
+      router.replace(`/dashboard/${workspaceId}`);
+    }
+    if (dirType === 'folder') {
+      if (!workspaceId) return;
+      dispatch({
+        type: 'DELETE_FOLDER',
+        payload: { folderId: fileId, workspaceId },
+      });
+      await deleteFolder(fileId);
+      router.replace(`/dashboard/${workspaceId}`);
+    }
+  };
+
   return (
     <>
       <div className="relative">
@@ -186,7 +212,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
                 hover:bg-white
                 hover:text-[#EB5757]
                 "
-                // onClick={deleteFileHandler}
+                onClick={deleteFileHandler}
               >
                 Delete
               </Button>
