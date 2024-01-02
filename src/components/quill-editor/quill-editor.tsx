@@ -39,15 +39,38 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
   //  For mounting quill editor
   const [quill, setQuill] = useState<any>();
 
-  //  TODOS: we need to get directory details and need to sync it with server and client side data
-  // 1.  get directory details
-  // 2.  get file details
-  // 3.  get file content
-  // 4.  sync file content with quill editor
-  // 5.  sync quill editor with file content
-  // 6.  sync file content with server
-  // 7.  sync file content with client
-  // 8.  sync directory details with server and client
+  // we need to get directory details and need to sync it with server and client side data
+
+  const details = useMemo(() => {
+    let selectedDir;
+
+    if (dirType === 'file') {
+      selectedDir = state.workspaces
+        .find((w) => w.id === workspaceId)
+        ?.folders.find((f) => f.id === folderId)
+        ?.files.find((f) => f.id === fileId);
+    }
+    if (dirType === 'folder') {
+      selectedDir = state.workspaces.find((w) => w.id === workspaceId)?.folders.find((f) => f.id === fileId);
+    }
+
+    if (dirType === 'workspace') {
+      selectedDir = state.workspaces.find((w) => w.id === fileId);
+    }
+
+    if (selectedDir) {
+      return selectedDir;
+    }
+
+    return {
+      title: dirDetails.title,
+      iconId: dirDetails.iconId,
+      createdAt: dirDetails.createdAt,
+      data: dirDetails.data,
+      inTrash: dirDetails.inTrash,
+      bannerUrl: dirDetails.bannerUrl,
+    } as workspace | Folder | File;
+  }, [state, workspaceId, folderId]);
 
   //   wrapper Ref
 
