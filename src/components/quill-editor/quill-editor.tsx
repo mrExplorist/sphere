@@ -5,11 +5,14 @@ import { File, Folder, workspace } from '@/lib/supabase/supabase.types';
 import React, { useCallback, useMemo, useState } from 'react';
 import 'quill/dist/quill.snow.css';
 import { Button } from '../ui/button';
-import { deleteFile, deleteFolder, updateFile, updateFolder } from '@/lib/supabase/queries';
+import { deleteFile, deleteFolder, updateFile, updateFolder, updateWorkspace } from '@/lib/supabase/queries';
 import { usePathname, useRouter } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
+import Image from 'next/image';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import EmojiPicker from '../global/emoji-picker';
 
 interface QuillEditorProps {
   dirDetails: File | Folder | workspace;
@@ -57,6 +60,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
   ]);
 
   const [saving, setSaving] = useState(false);
+  const supabase = createClientComponentClient();
 
   // we need to get directory details and need to sync it with server and client side data
 
@@ -340,7 +344,20 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
 
       {/* {details.bannerUrl && <></>} */}
 
+      {details.bannerUrl && (
+        <div className="relative w-full h-[200px]">
+          <Image
+            src={supabase.storage.from('file-banners').getPublicUrl(details.bannerUrl).data.publicUrl}
+            fill
+            className="w-full md:h-48
+            h-20
+            object-cover"
+            alt="Banner Image"
+          />
+        </div>
+      )}
       <div className="flex justify-center items-center flex-col mt-2 relative ">
+        {/* Todo: Emoji part here */}
         <div id="container" className="max-w-[800px] align-right" ref={wrapperRef}></div>
       </div>
     </>
