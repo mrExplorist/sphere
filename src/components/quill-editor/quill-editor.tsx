@@ -213,6 +213,39 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
     }
   };
 
+  //   icon on change handler
+  const iconOnChange = async (icon: string) => {
+    if (!fileId) return;
+    if (dirType === 'workspace') {
+      dispatch({
+        type: 'UPDATE_WORKSPACE',
+        payload: { workspace: { iconId: icon }, workspaceId: fileId },
+      });
+      await updateWorkspace({ iconId: icon }, fileId);
+    }
+    if (dirType === 'folder') {
+      if (!workspaceId) return;
+      dispatch({
+        type: 'UPDATE_FOLDER',
+        payload: {
+          folder: { iconId: icon },
+          workspaceId,
+          folderId: fileId,
+        },
+      });
+      await updateFolder({ iconId: icon }, fileId);
+    }
+    if (dirType === 'file') {
+      if (!workspaceId || !folderId) return;
+
+      dispatch({
+        type: 'UPDATE_FILE',
+        payload: { file: { iconId: icon }, workspaceId, folderId, fileId },
+      });
+      await updateFile({ iconId: icon }, fileId);
+    }
+  };
+
   return (
     <>
       <div className="relative">
@@ -357,7 +390,33 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
         </div>
       )}
       <div className="flex justify-center items-center flex-col mt-2 relative ">
-        {/* Todo: Emoji part here */}
+        <div
+          className="w-full
+        self-center
+        max-w-[800px]
+        flex
+        flex-col
+         px-7
+         lg:my-8"
+        >
+          <div className="text-[80px]">
+            <EmojiPicker getValue={iconOnChange}>
+              <div
+                className="w-[100px]
+                cursor-pointer
+                transition-colors
+                h-[100px]
+                flex
+                items-center
+                justify-center
+                hover:bg-muted
+                rounded-xl"
+              >
+                {details.iconId}
+              </div>
+            </EmojiPicker>
+          </div>
+        </div>
         <div id="container" className="max-w-[800px] align-right" ref={wrapperRef}></div>
       </div>
     </>
