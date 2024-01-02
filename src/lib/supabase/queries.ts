@@ -227,6 +227,13 @@ export const updateFolder = async (folder: Partial<Folder>, folderId: string) =>
   }
 };
 
+// delete folder
+
+export const deleteFolder = async (folderId: string) => {
+  if (!folderId) return;
+  await db.delete(files).where(eq(files.id, folderId));
+};
+
 // Get folder details
 
 export const getFolderDetails = async (folderId: string) => {
