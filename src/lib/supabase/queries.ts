@@ -227,6 +227,24 @@ export const updateFolder = async (folder: Partial<Folder>, folderId: string) =>
   }
 };
 
+// Get folder details
+
+export const getFolderDetails = async (folderId: string) => {
+  const isValid = validate(folderId);
+  if (!isValid) {
+    data: [];
+    error: 'Error';
+  }
+
+  try {
+    const response = (await db.select().from(folders).where(eq(folders.id, folderId)).limit(1)) as Folder[];
+
+    return { data: response, error: null };
+  } catch (error) {
+    return { data: [], error: 'Error' };
+  }
+};
+
 // update the workspace
 
 export const updateWorkspace = async (workspace: Partial<workspace>, workspaceId: string) => {
