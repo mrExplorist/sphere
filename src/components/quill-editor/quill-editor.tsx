@@ -13,6 +13,8 @@ import { Badge } from '../ui/badge';
 import Image from 'next/image';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import EmojiPicker from '../global/emoji-picker';
+import BannerUpload from '../banner-upload/banner-upload';
+import { XCircleIcon } from 'lucide-react';
 
 interface QuillEditorProps {
   dirDetails: File | Folder | workspace;
@@ -60,6 +62,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
   ]);
 
   const [saving, setSaving] = useState(false);
+  const [deletingBanner, setDeletingBanner] = useState(false);
   const supabase = createClientComponentClient();
 
   // we need to get directory details and need to sync it with server and client side data
@@ -246,6 +249,48 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
     }
   };
 
+  //   Delete banner handler
+
+  const deleteBanner = async () => {
+    if (!fileId) return;
+    setDeletingBanner(true);
+
+    if (dirType === 'workspace') {
+      dispatch({
+        type: 'UPDATE_WORKSPACE',
+        payload: { workspace: { bannerUrl: '' }, workspaceId: fileId },
+      });
+      await supabase.storage.from('file-banners').remove([`banner-${fileId}`]);
+      await updateWorkspace({ bannerUrl: '' }, fileId);
+    }
+    if (dirType === 'folder') {
+      if (!workspaceId) return;
+      dispatch({
+        type: 'UPDATE_FOLDER',
+        payload: {
+          folder: { bannerUrl: '' },
+          workspaceId,
+          folderId: fileId,
+        },
+      });
+      await supabase.storage.from('file-banners').remove([`banner-${fileId}`]);
+      await updateFolder({ bannerUrl: '' }, fileId);
+    }
+
+    if (dirType === 'file') {
+      if (!workspaceId || !folderId) return;
+
+      dispatch({
+        type: 'UPDATE_FILE',
+        payload: { file: { bannerUrl: '' }, workspaceId, folderId, fileId },
+      });
+
+      await supabase.storage.from('file-banners').remove([`banner-${fileId}`]);
+      await updateFile({ bannerUrl: '' }, fileId);
+    }
+    setDeletingBanner(false);
+  };
+
   return (
     <>
       <div className="relative">
@@ -375,8 +420,6 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
         </div>
       </div>
 
-      {/* {details.bannerUrl && <></>} */}
-
       {details.bannerUrl && (
         <div className="relative w-full h-[200px]">
           <Image
@@ -393,7 +436,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
         <div
           className="w-full
         self-center
-        max-w-[800px]
+        max-w-[1200px]
         flex
         flex-col
          px-7
@@ -416,6 +459,54 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
               </div>
             </EmojiPicker>
           </div>
+          <div className="flex">
+            <BannerUpload
+              details={details}
+              id={fileId}
+              dirType={dirType}
+              className="mt-2
+              text-sm
+              text-muted-foreground
+              p-2
+              hover:text-card-foreground
+              transition-all
+              rounded-md"
+            >
+              {details.bannerUrl ? 'Update Banner' : 'Add Banner'}
+            </BannerUpload>
+
+            {details.bannerUrl && (
+              <Button
+                disabled={deletingBanner}
+                onClick={deleteBanner}
+                variant="ghost"
+                className="gap-2 hover:bg-background
+                flex
+                item-center
+                justify-center
+                mt-2
+                text-sm
+                text-muted-foreground
+                w-36
+                p-2
+                rounded-md"
+              >
+                <XCircleIcon size={16} />
+                <span className="whitespace-nowrap font-normal">Remove Banner</span>
+              </Button>
+            )}
+          </div>
+          <span
+            className="
+            text-muted-foreground
+            text-3xl
+            font-bold
+            h-9
+          "
+          >
+            {details.title}
+          </span>
+          <span className="text-muted-foreground text-sm">{dirType.toUpperCase()}</span>
         </div>
         <div id="container" className="max-w-[800px] align-right" ref={wrapperRef}></div>
       </div>
