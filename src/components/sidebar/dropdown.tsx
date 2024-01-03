@@ -85,7 +85,7 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
       router.push(`/dashboard/${workspaceId}/${accordianId}`);
     }
     if (listType === 'file') {
-      router.push(`/dashboard/${workspaceId}/${folderId}/${accordianId}`);
+      router.push(`/dashboard/${workspaceId}/${folderId}/${accordianId.split('folder')[1]}`);
     }
   };
 
@@ -156,7 +156,7 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
       } else {
         toast({
           title: 'Success',
-          description: ' i for the folder',
+          description: '✅ emoji updated  for the folder',
         });
       }
     }
@@ -257,8 +257,6 @@ const DropDown: FC<DropDownProps> = ({ title, id, listType, iconId, children, di
     // pathId[0] is workspaceId, pathId[1] is folderId and pathId[2] is fileId if it is a file else undefined if it is a folder
 
     if (listType === 'folder') {
-      // ! ------------------------------------------>  MOVE FOLDER TO TRASH <------------------------------------------- !
-
       dispatch({
         type: 'UPDATE_FOLDER',
         payload: {

@@ -79,6 +79,19 @@ export const getFolders = async (workspaceId: string) => {
   }
 };
 
+// Query for getting workspace details by workspace ID
+export const getWorkspaceDetails = async (workspaceId: string) => {
+  const isValid = validate(workspaceId);
+  if (!isValid) return { data: [], error: 'Error' };
+  try {
+    const response = (await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1)) as workspace[];
+    return { data: response, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: 'Error getting workspace details from db' };
+  }
+};
+
 // Query for getting private workspace by user ID
 export const getPrivateWorkspaces = async (userId: string) => {
   if (!userId) return [];
@@ -214,6 +227,31 @@ export const updateFolder = async (folder: Partial<Folder>, folderId: string) =>
   }
 };
 
+// delete folder
+
+export const deleteFolder = async (folderId: string) => {
+  if (!folderId) return;
+  await db.delete(files).where(eq(files.id, folderId));
+};
+
+// Get folder details
+
+export const getFolderDetails = async (folderId: string) => {
+  const isValid = validate(folderId);
+  if (!isValid) {
+    data: [];
+    error: 'Error';
+  }
+
+  try {
+    const response = (await db.select().from(folders).where(eq(folders.id, folderId)).limit(1)) as Folder[];
+
+    return { data: response, error: null };
+  } catch (error) {
+    return { data: [], error: 'Error' };
+  }
+};
+
 // update the workspace
 
 export const updateWorkspace = async (workspace: Partial<workspace>, workspaceId: string) => {
@@ -251,5 +289,24 @@ export const updateFile = async (file: Partial<File>, fileId: string) => {
   } catch (error) {
     console.log(error);
     return { data: null, error: 'Error' };
+  }
+};
+
+export const deleteFile = async (fileId: string) => {
+  if (!fileId) return;
+  await db.delete(files).where(eq(files.id, fileId));
+};
+
+// Get file details
+
+export const getFileDetails = async (fileId: string) => {
+  const isValid = validate(fileId);
+
+  try {
+    const response = (await db.select().from(files).where(eq(files.id, fileId)).limit(1)) as File[];
+
+    return { data: response, error: null };
+  } catch (error) {
+    return { data: [], error: 'Error' };
   }
 };
