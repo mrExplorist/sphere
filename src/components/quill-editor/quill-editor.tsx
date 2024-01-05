@@ -2,10 +2,19 @@
 
 import { useAppState } from '@/lib/providers/state-provider';
 import { File, Folder, workspace } from '@/lib/supabase/supabase.types';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import 'quill/dist/quill.snow.css';
 import { Button } from '../ui/button';
-import { deleteFile, deleteFolder, updateFile, updateFolder, updateWorkspace } from '@/lib/supabase/queries';
+import {
+  deleteFile,
+  deleteFolder,
+  getFileDetails,
+  getFolderDetails,
+  getWorkspaceDetails,
+  updateFile,
+  updateFolder,
+  updateWorkspace,
+} from '@/lib/supabase/queries';
 import { usePathname, useRouter } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -290,6 +299,88 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
     }
     setDeletingBanner(false);
   };
+
+  //  explain why i am using this below useEffect hook
+
+  //  when user changes the workspace or folder or file then we need to fetch the data from the server and update the client side data
+
+  useEffect(() => {
+    if (!fileId) return;
+    let selectedDir;
+
+    // Define a function to fetch information
+    const fetchInformation = async () => {
+      // Fetching details based on dirType
+      if (dirType === 'file') {
+        const { data: selectedDir, error } = await getFileDetails(fileId);
+
+        // Handle error or missing data
+        if (error || !selectedDir) {
+          return router.replace('/dashboard');
+        }
+
+        if (!selectedDir[0]) {
+          if (!workspaceId) return;
+          return router.replace(`/dashboard/${workspaceId}`);
+        }
+        if (!workspaceId || quill === null) return;
+        if (!selectedDir[0].data) return;
+
+        // Set Quill editor contents and update application state
+        quill.setContents(JSON.parse(selectedDir[0].data || ''));
+        // Update application state with new data from server response
+        dispatch({
+          type: 'UPDATE_FILE',
+          payload: {
+            file: { data: selectedDir[0].data },
+            fileId,
+            folderId: selectedDir[0].folderId,
+            workspaceId,
+          },
+        });
+      }
+      if (dirType === 'folder') {
+        const { data: selectedDir, error } = await getFolderDetails(fileId);
+        if (error || !selectedDir) {
+          return router.replace('/dashboard');
+        }
+
+        if (!selectedDir[0]) {
+          router.replace(`/dashboard/${workspaceId}`);
+        }
+        if (quill === null) return;
+        if (!selectedDir[0].data) return;
+        quill.setContents(JSON.parse(selectedDir[0].data || ''));
+        // Update application state with new data from server response
+        dispatch({
+          type: 'UPDATE_FOLDER',
+          payload: {
+            folderId: fileId,
+            folder: { data: selectedDir[0].data },
+            workspaceId: selectedDir[0].workspaceId,
+          },
+        });
+      }
+      if (dirType === 'workspace') {
+        const { data: selectedDir, error } = await getWorkspaceDetails(fileId);
+        if (error || !selectedDir) {
+          return router.replace('/dashboard');
+        }
+        if (!selectedDir[0] || quill === null) return;
+        if (!selectedDir[0].data) return;
+        // Set Quill editor contents and update application state
+        quill.setContents(JSON.parse(selectedDir[0].data || ''));
+        dispatch({
+          type: 'UPDATE_WORKSPACE',
+          payload: {
+            workspace: { data: selectedDir[0].data },
+            workspaceId: fileId,
+          },
+        });
+      }
+    };
+    fetchInformation();
+  }, [fileId, workspaceId, quill, dirType]);
 
   return (
     <>
