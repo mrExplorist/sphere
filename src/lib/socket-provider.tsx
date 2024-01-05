@@ -45,6 +45,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       setIsConnected(false);
     });
 
+    // Set the socket instance in the state
+    setSocket(socketInstance);
+
     // Cleanup function to disconnect the socket when the component unmounts
     return () => {
       socketInstance.disconnect();
