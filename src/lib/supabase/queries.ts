@@ -259,9 +259,6 @@ export const updateWorkspace = async (workspace: Partial<workspace>, workspaceId
 
   try {
     await db.update(workspaces).set(workspace).where(eq(workspaces.id, workspaceId));
-
-    revalidatePath(`/dashboard/${workspaceId}`);
-
     return { data: null, error: null };
   } catch (error) {
     console.log(error);
@@ -301,12 +298,15 @@ export const deleteFile = async (fileId: string) => {
 
 export const getFileDetails = async (fileId: string) => {
   const isValid = validate(fileId);
-
+  if (!isValid) {
+    data: [];
+    error: 'Error';
+  }
   try {
     const response = (await db.select().from(files).where(eq(files.id, fileId)).limit(1)) as File[];
-
     return { data: response, error: null };
   } catch (error) {
+    console.log('🔴Error', error);
     return { data: [], error: 'Error' };
   }
 };
