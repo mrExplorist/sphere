@@ -2,10 +2,19 @@
 
 import { useAppState } from '@/lib/providers/state-provider';
 import { File, Folder, workspace } from '@/lib/supabase/supabase.types';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import 'quill/dist/quill.snow.css';
 import { Button } from '../ui/button';
-import { deleteFile, deleteFolder, updateFile, updateFolder, updateWorkspace } from '@/lib/supabase/queries';
+import {
+  deleteFile,
+  deleteFolder,
+  getFileDetails,
+  getFolderDetails,
+  getWorkspaceDetails,
+  updateFile,
+  updateFolder,
+  updateWorkspace,
+} from '@/lib/supabase/queries';
 import { usePathname, useRouter } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -15,6 +24,8 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import EmojiPicker from '../global/emoji-picker';
 import BannerUpload from '../banner-upload/banner-upload';
 import { XCircleIcon } from 'lucide-react';
+import { useSocket } from '@/lib/socket-provider';
+import { useSupabaseUser } from '@/lib/providers/supabase-user-provider';
 
 interface QuillEditorProps {
   dirDetails: File | Folder | workspace;
@@ -46,8 +57,11 @@ var TOOLBAR_OPTIONS = [
 const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }) => {
   const { state, workspaceId, folderId, dispatch } = useAppState();
 
+  const { user } = useSupabaseUser();
+
   //  For mounting quill editor
-  const [quill, setQuill] = useState<any>();
+  const [quill, setQuill] = useState<any>(null);
+  const { socket, isConnected } = useSocket();
 
   const router = useRouter();
 
@@ -61,6 +75,8 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
     },
   ]);
 
+  //  Saving timer ref for saving the data
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const [saving, setSaving] = useState(false);
   const [deletingBanner, setDeletingBanner] = useState(false);
   const supabase = createClientComponentClient();
@@ -69,19 +85,19 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
 
   const details = useMemo(() => {
     let selectedDir;
-
     if (dirType === 'file') {
       selectedDir = state.workspaces
-        .find((w) => w.id === workspaceId)
-        ?.folders.find((f) => f.id === folderId)
-        ?.files.find((f) => f.id === fileId);
+        .find((workspace) => workspace.id === workspaceId)
+        ?.folders.find((folder) => folder.id === folderId)
+        ?.files.find((file) => file.id === fileId);
     }
     if (dirType === 'folder') {
-      selectedDir = state.workspaces.find((w) => w.id === workspaceId)?.folders.find((f) => f.id === fileId);
+      selectedDir = state.workspaces
+        .find((workspace) => workspace.id === workspaceId)
+        ?.folders.find((folder) => folder.id === fileId);
     }
-
     if (dirType === 'workspace') {
-      selectedDir = state.workspaces.find((w) => w.id === fileId);
+      selectedDir = state.workspaces.find((workspace) => workspace.id === fileId);
     }
 
     if (selectedDir) {
@@ -291,8 +307,159 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
     setDeletingBanner(false);
   };
 
+  //  Explain Why I am using this below useEffect hook
+
+  //  When user changes the workspace or folder or file then we need to fetch the data from the server and update the client side data
+
+  useEffect(() => {
+    if (!fileId) return;
+    let selectedDir;
+    const fetchInformation = async () => {
+      if (dirType === 'file') {
+        const { data: selectedDir, error } = await getFileDetails(fileId);
+        if (error || !selectedDir) {
+          return router.replace('/dashboard');
+        }
+
+        if (!selectedDir[0]) {
+          if (!workspaceId) return;
+          return router.replace(`/dashboard/${workspaceId}`);
+        }
+        if (!workspaceId || quill === null) return;
+        if (!selectedDir[0].data) return;
+        quill.setContents(JSON.parse(selectedDir[0].data || ''));
+        dispatch({
+          type: 'UPDATE_FILE',
+          payload: {
+            file: { data: selectedDir[0].data },
+            fileId,
+            folderId: selectedDir[0].folderId,
+            workspaceId,
+          },
+        });
+      }
+      if (dirType === 'folder') {
+        const { data: selectedDir, error } = await getFolderDetails(fileId);
+        if (error || !selectedDir) {
+          return router.replace('/dashboard');
+        }
+
+        if (!selectedDir[0]) {
+          router.replace(`/dashboard/${workspaceId}`);
+        }
+        if (quill === null) return;
+        if (!selectedDir[0].data) return;
+        quill.setContents(JSON.parse(selectedDir[0].data || ''));
+        dispatch({
+          type: 'UPDATE_FOLDER',
+          payload: {
+            folderId: fileId,
+            folder: { data: selectedDir[0].data },
+            workspaceId: selectedDir[0].workspaceId,
+          },
+        });
+      }
+      if (dirType === 'workspace') {
+        const { data: selectedDir, error } = await getWorkspaceDetails(fileId);
+        if (error || !selectedDir) {
+          return router.replace('/dashboard');
+        }
+        if (!selectedDir[0] || quill === null) return;
+        if (!selectedDir[0].data) return;
+        quill.setContents(JSON.parse(selectedDir[0].data || ''));
+        dispatch({
+          type: 'UPDATE_WORKSPACE',
+          payload: {
+            workspace: { data: selectedDir[0].data },
+            workspaceId: fileId,
+          },
+        });
+      }
+    };
+    fetchInformation();
+  }, [fileId, workspaceId, quill, dirType]);
+
+  //   creating a room when this component render
+
+  useEffect(() => {
+    if (socket === null || quill === null || !fileId) return;
+    socket.emit('create-room', fileId);
+  }, [socket, quill, fileId]);
+
+  //   Broadcasting quill changes to all the clients
+  useEffect(() => {
+    if (socket === null || quill === null || !fileId || !user) return;
+    // TODO: for cursors
+    const selectionChangeHandler = () => {};
+    const quillHandler = (delta: any, oldDelta: any, source: any) => {
+      if (source !== 'user') return; // if the change is not from user then return
+
+      // If there is already a timer then clear it and set a new timer for saving the data
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+
+      setSaving(true);
+      const contents = quill.getContents();
+      const quillLength = quill.getLength();
+      saveTimerRef.current = setTimeout(async () => {
+        if (contents && quillLength !== 1 && fileId) {
+          if (dirType === 'workspace') {
+            dispatch({
+              type: 'UPDATE_WORKSPACE',
+              payload: {
+                workspace: { data: JSON.stringify(contents) },
+                workspaceId: fileId,
+              },
+            });
+            await updateWorkspace({ data: JSON.stringify(contents) }, fileId);
+          }
+          if (dirType === 'file') {
+            if (!folderId || !workspaceId) return;
+            dispatch({
+              type: 'UPDATE_FILE',
+              payload: {
+                file: { data: JSON.stringify(contents) },
+                fileId,
+                folderId,
+                workspaceId,
+              },
+            });
+
+            await updateFile({ data: JSON.stringify(contents) }, fileId);
+          }
+          if (dirType === 'folder') {
+            if (!workspaceId) return;
+            dispatch({
+              type: 'UPDATE_FOLDER',
+              payload: {
+                folderId: fileId,
+                folder: { data: JSON.stringify(contents) },
+                workspaceId,
+              },
+            });
+            await updateFolder({ data: JSON.stringify(contents) }, fileId);
+          }
+        }
+        setSaving(false);
+      }, 850);
+      socket.emit('send-changes', delta, fileId);
+    };
+
+    quill.on('text-change', quillHandler);
+
+    // TODO: Cursors selection handler
+
+    return () => {
+      quill.off('text-change', quillHandler);
+      //  TODO: Cursors
+
+      // checking if there is a timer then clear it
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [socket, quill, fileId, user, details, workspaceId]);
+
   return (
     <>
+      {/* {isConnected ? 'Socket Connected' : 'Socket Not Connected'} */}
       <div className="relative">
         {details.inTrash && (
           <article
