@@ -1,17 +1,22 @@
 'use client';
-
-import { FC, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useToast } from '../ui/use-toast';
 import { useAppState } from '@/lib/providers/state-provider';
 import { User, workspace } from '@/lib/supabase/supabase.types';
 import { useSupabaseUser } from '@/lib/providers/supabase-user-provider';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Briefcase, CreditCard, ExternalLink, Lock, Plus, Share, UserIcon } from 'lucide-react';
+import { Briefcase, CreditCard, ExternalLink, Lock, LogOut, Plus, Share, User as UserIcon } from 'lucide-react';
 import { Separator } from '../ui/separator';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
-import { addCollaborators, deleteWorkspace, removeCollaborators, updateWorkspace } from '@/lib/supabase/queries';
+import {
+  addCollaborators,
+  deleteWorkspace,
+  getCollaborators,
+  removeCollaborators,
+  updateWorkspace,
+} from '@/lib/supabase/queries';
 import { v4 } from 'uuid';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -25,96 +30,86 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+
 import CollaboratorSearch from '../global/collaborator-search';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Alert, AlertDescription } from '../ui/alert';
-import SphereProfileIcon from '../icons/sphereProfileIcon';
+import CypressProfileIcon from '../icons/sphereProfileIcon';
+
 import Link from 'next/link';
-import { collaborators } from '../../lib/supabase/schema';
+// import { useSubscriptionModal } from '@/lib/providers/subscription-modal-provider';
+// import { postData } from '@/lib/utils';
 
-interface SettingsFormProps {}
-
-const SettingsForm: FC<SettingsFormProps> = ({}) => {
+const SettingsForm = () => {
   const { toast } = useToast();
-  const { user } = useSupabaseUser();
+  const { user, subscription } = useSupabaseUser();
+  //   const { open, setOpen } = useSubscriptionModal();
   const router = useRouter();
-  const supabase = createClientComponentClient(); // we need to get the url for avatar
-
+  const supabase = createClientComponentClient();
   const { state, workspaceId, dispatch } = useAppState();
-
-  const [open, setOpen] = useState();
   const [permissions, setPermissions] = useState('private');
   const [collaborators, setCollaborators] = useState<User[] | []>([]);
-
   const [openAlertMessage, setOpenAlertMessage] = useState(false);
-
   const [workspaceDetails, setWorkspaceDetails] = useState<workspace>();
-
-  const titleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
+  const titleTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
-
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [loadingPortal, setLoadingPortal] = useState(false);
 
-  //  TODOS: --------------------------->
+  //WIP PAYMENT PORTAL
 
-  //  todo : PAYMENT PORTAL
-  //  todo: ADD COLLABORATORS
-
+  //   const redirectToCustomerPortal = async () => {
+  //     setLoadingPortal(true);
+  //     try {
+  //       const { url, error } = await postData({
+  //         url: '/api/create-portal-link',
+  //       });
+  //       window.location.assign(url);
+  //     } catch (error) {
+  //       console.log(error);
+  //       setLoadingPortal(false);
+  //     }
+  //     setLoadingPortal(false);
+  //   };
+  //addcollborators
   const addCollaborator = async (profile: User) => {
     if (!workspaceId) return;
-
-    await addCollaborators(collaborators, workspaceId);
-    setCollaborators((prev) => [...prev, profile]);
-    router.refresh();
+    if (subscription?.status !== 'active' && collaborators.length >= 2) {
+      //   setOpen(true);
+      return;
+    }
+    await addCollaborators([profile], workspaceId);
+    setCollaborators([...collaborators, profile]);
   };
 
+  //remove collaborators
   const removeCollaborator = async (user: User) => {
     if (!workspaceId) return;
-
     if (collaborators.length === 1) {
       setPermissions('private');
     }
-
     await removeCollaborators([user], workspaceId);
-    setCollaborators(collaborators.filter((c) => c.id !== user.id));
-
-    // to refresh our workspace categories
+    setCollaborators(collaborators.filter((collaborator) => collaborator.id !== user.id));
     router.refresh();
   };
 
-  //   onchange
-
+  //on change
   const workspaceNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!workspaceId || !e.target.value) return;
-
     dispatch({
       type: 'UPDATE_WORKSPACE',
-      payload: {
-        workspace: { title: e.target.value },
-        workspaceId: workspaceId,
-      },
+      payload: { workspace: { title: e.target.value }, workspaceId },
     });
-
     if (titleTimerRef.current) clearTimeout(titleTimerRef.current);
-
     titleTimerRef.current = setTimeout(async () => {
-      await updateWorkspace(
-        {
-          title: e.target.value,
-        },
-        workspaceId,
-      );
+      await updateWorkspace({ title: e.target.value }, workspaceId);
     }, 500);
   };
 
-  //   onChangeWorkspace Logo
-
   const onChangeWorkspaceLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!workspaceId) return;
-
     const file = e.target.files?.[0];
     if (!file) return;
     const uuid = v4();
@@ -123,21 +118,51 @@ const SettingsForm: FC<SettingsFormProps> = ({}) => {
       cacheControl: '3600',
       upsert: true,
     });
+
+    if (!error) {
+      dispatch({
+        type: 'UPDATE_WORKSPACE',
+        payload: { workspace: { logo: data.path }, workspaceId },
+      });
+      await updateWorkspace({ logo: data.path }, workspaceId);
+      setUploadingLogo(false);
+    }
   };
 
-  // FETCH: Get workspace details
+  const onClickAlertConfirm = async () => {
+    if (!workspaceId) return;
+    if (collaborators.length > 0) {
+      await removeCollaborators(collaborators, workspaceId);
+    }
+    setPermissions('private');
+    setOpenAlertMessage(false);
+  };
+
+  const onPermissionsChange = (val: string) => {
+    if (val === 'private') {
+      setOpenAlertMessage(true);
+    } else setPermissions(val);
+  };
+
+  //CHALLENGE fetching avatar details
+  //WIP Payment Portal redirect
+
   useEffect(() => {
     const showingWorkspace = state.workspaces.find((workspace) => workspace.id === workspaceId);
-
-    // Setting the workspace details in the state for the settings form to use
     if (showingWorkspace) setWorkspaceDetails(showingWorkspace);
   }, [workspaceId, state]);
 
-  //TODO:  fetch avatar details
-
-  // get all the collaborators
-
-  // TODO: payment portal redirects --- FOR STRIPE PAYMENTS
+  useEffect(() => {
+    if (!workspaceId) return;
+    const fetchCollaborators = async () => {
+      const response = await getCollaborators(workspaceId);
+      if (response.length) {
+        setPermissions('shared');
+        setCollaborators(response);
+      }
+    };
+    fetchCollaborators();
+  }, [workspaceId]);
 
   return (
     <div className="flex gap-4 flex-col">
@@ -165,18 +190,15 @@ const SettingsForm: FC<SettingsFormProps> = ({}) => {
           accept="image/*"
           placeholder="Workspace Logo"
           onChange={onChangeWorkspaceLogo}
-          //   todo: subscription check
-          disabled={uploadingLogo}
+          disabled={uploadingLogo || subscription?.status !== 'active'}
         />
-
-        {/* {subscription?.status !== 'active' && (
+        {subscription?.status !== 'active' && (
           <small className="text-muted-foreground">To customize your workspace, you need to be on a Pro Plan</small>
-        )} */}
+        )}
       </div>
-
       <>
         <Label htmlFor="permissions">Permissions</Label>
-        <Select onValueChange={() => {}} value={permissions}>
+        <Select onValueChange={onPermissionsChange} value={permissions}>
           <SelectTrigger className="w-full h-26 -mt-3">
             <SelectValue />
           </SelectTrigger>
@@ -210,6 +232,7 @@ const SettingsForm: FC<SettingsFormProps> = ({}) => {
             </SelectGroup>
           </SelectContent>
         </Select>
+
         {permissions === 'shared' && (
           <div>
             <CollaboratorSearch
@@ -308,7 +331,82 @@ const SettingsForm: FC<SettingsFormProps> = ({}) => {
             Delete Workspace
           </Button>
         </Alert>
+        <p className="flex items-center gap-2 mt-6">
+          <UserIcon size={20} /> Profile
+        </p>
+        <Separator />
+        <div className="flex items-center">
+          <Avatar>
+            <AvatarImage src={''} />
+            <AvatarFallback>
+              <CypressProfileIcon />
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col ml-6">
+            <small className="text-muted-foreground cursor-not-allowed">{user ? user.email : ''}</small>
+            <Label htmlFor="profilePicture" className="text-sm text-muted-foreground">
+              Profile Picture
+            </Label>
+            <Input
+              name="profilePicture"
+              type="file"
+              accept="image/*"
+              placeholder="Profile Picture"
+              // onChange={onChangeProfilePicture}
+              disabled={uploadingProfilePic}
+            />
+          </div>
+        </div>
+        {/* <LogoutButton>
+          <div className="flex items-center">
+            <LogOut />
+          </div>
+        </LogoutButton> */}
+        <p className="flex items-center gap-2 mt-6">
+          <CreditCard size={20} /> Billing & Plan
+        </p>
+        <Separator />
+        <p className="text-muted-foreground">
+          You are currently on a {subscription?.status === 'active' ? 'Pro' : 'Free'} Plan
+        </p>
+        <Link href="/" target="_blank" className="text-muted-foreground flex flex-row items-center gap-2">
+          View Plans <ExternalLink size={16} />
+        </Link>
+        {subscription?.status === 'active' ? (
+          <div>
+            <Button
+              type="button"
+              size="sm"
+              variant={'secondary'}
+              disabled={loadingPortal}
+              className="text-sm"
+              //   onClick={redirectToCustomerPortal}
+            >
+              Manage Subscription
+            </Button>
+          </div>
+        ) : (
+          <div>
+            <Button type="button" size="sm" variant={'secondary'} className="text-sm" onClick={() => {}}>
+              Start Plan
+            </Button>
+          </div>
+        )}
       </>
+      <AlertDialog open={openAlertMessage}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDescription>
+              Changing a Shared workspace to a Private workspace will remove all collaborators permanantly.
+            </AlertDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setOpenAlertMessage(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={onClickAlertConfirm}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
