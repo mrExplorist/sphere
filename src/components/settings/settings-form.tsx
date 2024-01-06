@@ -36,16 +36,16 @@ import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Alert, AlertDescription } from '../ui/alert';
-import CypressProfileIcon from '../icons/sphereProfileIcon';
+import sphereProfileIcon from '../icons/sphereProfileIcon';
 
 import Link from 'next/link';
-// import { useSubscriptionModal } from '@/lib/providers/subscription-modal-provider';
-// import { postData } from '@/lib/utils';
+
+import SphereProfileIcon from '../icons/sphereProfileIcon';
 
 const SettingsForm = () => {
   const { toast } = useToast();
   const { user, subscription } = useSupabaseUser();
-  //   const { open, setOpen } = useSubscriptionModal();
+
   const router = useRouter();
   const supabase = createClientComponentClient();
   const { state, workspaceId, dispatch } = useAppState();
@@ -60,26 +60,10 @@ const SettingsForm = () => {
 
   //WIP PAYMENT PORTAL
 
-  //   const redirectToCustomerPortal = async () => {
-  //     setLoadingPortal(true);
-  //     try {
-  //       const { url, error } = await postData({
-  //         url: '/api/create-portal-link',
-  //       });
-  //       window.location.assign(url);
-  //     } catch (error) {
-  //       console.log(error);
-  //       setLoadingPortal(false);
-  //     }
-  //     setLoadingPortal(false);
-  //   };
   //addcollborators
   const addCollaborator = async (profile: User) => {
     if (!workspaceId) return;
-    if (subscription?.status !== 'active' && collaborators.length >= 2) {
-      //   setOpen(true);
-      return;
-    }
+
     await addCollaborators([profile], workspaceId);
     setCollaborators([...collaborators, profile]);
   };
@@ -104,7 +88,7 @@ const SettingsForm = () => {
     });
     if (titleTimerRef.current) clearTimeout(titleTimerRef.current);
     titleTimerRef.current = setTimeout(async () => {
-      await updateWorkspace({ title: e.target.value }, workspaceId);
+      // await updateWorkspace({ title: e.target.value }, workspaceId);
     }, 500);
   };
 
@@ -339,7 +323,7 @@ const SettingsForm = () => {
           <Avatar>
             <AvatarImage src={''} />
             <AvatarFallback>
-              <CypressProfileIcon />
+              <SphereProfileIcon />
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col ml-6">
@@ -357,11 +341,6 @@ const SettingsForm = () => {
             />
           </div>
         </div>
-        {/* <LogoutButton>
-          <div className="flex items-center">
-            <LogOut />
-          </div>
-        </LogoutButton> */}
         <p className="flex items-center gap-2 mt-6">
           <CreditCard size={20} /> Billing & Plan
         </p>
