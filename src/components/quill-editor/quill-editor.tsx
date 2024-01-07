@@ -307,8 +307,6 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
     setDeletingBanner(false);
   };
 
-  //  Explain Why I am using this below useEffect hook
-
   //  When user changes the workspace or folder or file then we need to fetch the data from the server and update the client side data
 
   useEffect(() => {
@@ -456,6 +454,22 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
   }, [socket, quill, fileId, user, details, workspaceId]);
+
+  //   emitting the changes to all the clients
+
+  useEffect(() => {
+    if (socket === null || quill === null || !fileId) return;
+    const socketHandler = (deltas: any, id: string) => {
+      if (id === fileId) {
+        quill.updateContents(deltas);
+      }
+    };
+    socket.on('receive-changes', socketHandler);
+    // cleanup function for socket handler when component unmounts
+    return () => {
+      socket.off('receive-changes', socketHandler);
+    };
+  }, [socket, quill, fileId]);
 
   return (
     <>
