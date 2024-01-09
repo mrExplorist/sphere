@@ -6,6 +6,26 @@ Welcome to sphere repo, a vibrant collaborative workspace designed by and for de
 
 ![sphere](https://github.com/mrExplorist/sphere/assets/90063350/7cd2db8a-fb93-4691-9343-83ee81332bcb)
 
+![Screenshot from 2024-01-09 19-41-01](https://github.com/mrExplorist/sphere/assets/90063350/b22ce0ff-63b4-42d5-8c2d-e0bc2f9e997a)
+
+![Screenshot from 2024-01-09 19-07-08](https://github.com/mrExplorist/sphere/assets/90063350/b20c39a6-92cf-49f6-b969-1e94e275a062)
+
+![Screenshot from 2024-01-09 19-08-59](https://github.com/mrExplorist/sphere/assets/90063350/c529fa35-fdd6-4dc8-af33-2966e4fd962a)
+
+![Screenshot from 2024-01-09 19-21-56](https://github.com/mrExplorist/sphere/assets/90063350/8299ffa8-11b1-4e76-8206-76559556d8e9)
+
+![Screenshot from 2024-01-09 19-23-12](https://github.com/mrExplorist/sphere/assets/90063350/0c250e01-ca85-459a-ade4-6b979c55c7ff)
+
+![Screenshot from 2024-01-09 19-25-22](https://github.com/mrExplorist/sphere/assets/90063350/4c9f0843-5778-44ba-be98-577d016e2917)
+
+![Screenshot from 2024-01-09 19-26-00](https://github.com/mrExplorist/sphere/assets/90063350/85623966-917b-4713-9d38-fec9889dc055)
+
+![Screenshot from 2024-01-09 19-26-42](https://github.com/mrExplorist/sphere/assets/90063350/14bbc947-db25-4400-8f37-7b2f471c76a3)
+
+![Screenshot from 2024-01-09 19-41-01](https://github.com/mrExplorist/sphere/assets/90063350/3b03edaa-60ae-4ab1-bcf0-8e3b2c46dcad)
+
+
+
 
 
 ## Key Features:
