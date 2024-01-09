@@ -1,4 +1,4 @@
-# Sphere(Collaboration in sync and ) 🚀
+# Sphere(Collaboration in sync easy and fun) 🚀
 
 🛠️ **Actively Building!**
 
