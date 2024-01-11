@@ -6,7 +6,6 @@ import db from './db';
 import { File, Folder, Subscription, User, workspace } from './supabase.types';
 import { validate } from 'uuid';
 import { collaborators } from './schema';
-import { revalidatePath } from 'next/cache';
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Queries for communicating with the database ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Query for creating a new workspace
@@ -43,6 +42,36 @@ export const getUserSubscriptionStatus = async (userId: string) => {
   } catch (error) {
     console.log(error);
     return { data: null, error: `Error ${error}` };
+  }
+};
+
+// Query for finding user using User ID
+export const getUser = async (userId: string) => {
+  const isValid = validate(userId);
+  const response = await db.query.users.findFirst({
+    where: (u, { eq }) => eq(u.id, userId),
+  });
+
+  return response;
+};
+
+// GetActive Product with Price
+export const getActiveProductsWithPrice = async () => {
+  try {
+    const res = await db.query.products.findMany({
+      where: (pro, { eq }) => eq(pro.active, true),
+
+      with: {
+        prices: {
+          where: (pri: { active: any }, { eq }: any) => eq(pri.active, true),
+        },
+      },
+    });
+    if (res.length) return { data: res, error: null };
+    return { data: [], error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: [], error };
   }
 };
 
