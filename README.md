@@ -2,7 +2,7 @@
 
 🛠️ **Actively Building!**
 
-Welcome to sphere repo, a vibrant collaborative workspace designed by and for developers. Dive into the future of teamwork with an array of cutting-edge features that elevate your collaborative development experience.
+Welcome to sphere repo, a vibrant collaborative workspaces. Dive into the future of teamwork with an array of cutting-edge features that elevate your collaborative development experience.
 
 ![sphere](https://github.com/mrExplorist/sphere/assets/90063350/7cd2db8a-fb93-4691-9343-83ee81332bcb)
 
