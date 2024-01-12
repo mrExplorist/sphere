@@ -10,6 +10,8 @@ import { createFolder } from '@/lib/supabase/queries';
 import { useToast } from '../ui/use-toast';
 import { Accordion } from '../ui/accordion';
 import DropDown from './dropdown';
+import useSupabaseRealtime from '@/lib/hooks/useSupabaseRealtime';
+import { useSubscriptionModal } from '@/lib/providers/subscription-modal-provider';
 
 interface FoldersDropdownListProps {
   workspaceFolders: Folder[];
@@ -17,7 +19,11 @@ interface FoldersDropdownListProps {
 }
 
 const FoldersDropdownList: React.FC<FoldersDropdownListProps> = ({ workspaceFolders, workspaceId }) => {
+  // set real-time update
+  useSupabaseRealtime();
+
   const { state, dispatch, folderId } = useAppState();
+  const { open, setOpen } = useSubscriptionModal();
 
   const { toast } = useToast();
   const [folders, setFolders] = useState(workspaceFolders);
@@ -49,7 +55,9 @@ const FoldersDropdownList: React.FC<FoldersDropdownListProps> = ({ workspaceFold
 
   //add folder
   const addFolderHandler = async () => {
+    // TODO: Subscription Modal  - 3 folders limit
     if (folders.length >= 3 && !subscription) {
+      setOpen(true);
       return;
     }
     const newFolder: Folder = {
@@ -75,8 +83,8 @@ const FoldersDropdownList: React.FC<FoldersDropdownListProps> = ({ workspaceFold
       });
     } else {
       toast({
-        title: 'Success',
-        description: 'Created folder.',
+        title: 'Success ',
+        description: '✅ Created folder.',
       });
     }
   };
@@ -121,7 +129,7 @@ const FoldersDropdownList: React.FC<FoldersDropdownListProps> = ({ workspaceFold
         {folders
           .filter((folder) => !folder.inTrash)
           .map((folder) => (
-            <DropDown key={folder.id} id={folder.id} title={folder.title} listType="folder" iconId={folder.iconId} />
+            <DropDown key={folder.id} title={folder.title} listType="folder" id={folder.id} iconId={folder.iconId} />
           ))}
       </Accordion>
     </>
