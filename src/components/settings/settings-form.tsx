@@ -41,6 +41,8 @@ import sphereProfileIcon from '../icons/sphereProfileIcon';
 import Link from 'next/link';
 
 import SphereProfileIcon from '../icons/sphereProfileIcon';
+import LogoutButton from '../global/logout-button';
+import { useSubscriptionModal } from '@/lib/providers/subscription-modal-provider';
 
 const SettingsForm = () => {
   const { toast } = useToast();
@@ -57,6 +59,7 @@ const SettingsForm = () => {
   const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [loadingPortal, setLoadingPortal] = useState(false);
+  const { open, setOpen } = useSubscriptionModal();
 
   //WIP PAYMENT PORTAL
 
@@ -88,7 +91,7 @@ const SettingsForm = () => {
     });
     if (titleTimerRef.current) clearTimeout(titleTimerRef.current);
     titleTimerRef.current = setTimeout(async () => {
-      // await updateWorkspace({ title: e.target.value }, workspaceId);
+      await updateWorkspace({ title: e.target.value }, workspaceId);
     }, 500);
   };
 
@@ -206,7 +209,7 @@ const SettingsForm = () => {
               </SelectItem>
               <SelectItem value="shared">
                 <div className="p-2 flex gap-4 justify-center items-center">
-                  <Share></Share>
+                  <Share />
                   <article className="text-left flex flex-col">
                     <span>Shared</span>
                     <span>You can invite collaborators.</span>
@@ -341,6 +344,13 @@ const SettingsForm = () => {
             />
           </div>
         </div>
+
+        <LogoutButton>
+          <div className="flex items-center ">
+            <LogOut /> Logout
+          </div>
+        </LogoutButton>
+
         <p className="flex items-center gap-2 mt-6">
           <CreditCard size={20} /> Billing & Plan
         </p>
@@ -366,7 +376,7 @@ const SettingsForm = () => {
           </div>
         ) : (
           <div>
-            <Button type="button" size="sm" variant={'secondary'} className="text-sm" onClick={() => {}}>
+            <Button type="button" size="sm" variant={'secondary'} className="text-sm" onClick={() => setOpen(true)}>
               Start Plan
             </Button>
           </div>
