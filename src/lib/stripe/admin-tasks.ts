@@ -1,8 +1,8 @@
 import Stripe from 'stripe';
 import { Price, Product } from '../supabase/supabase.types';
 import db from '../supabase/db';
-import { prices, products } from '../../../migrations/schema';
-
+import { customers, prices, products } from '../../../migrations/schema';
+import { stripe } from './index';
 export const upsertProductRecord = async (product: Stripe.Product) => {
   const productData: Product = {
     id: product.id,
@@ -43,4 +43,30 @@ export const upsertPriceRecord = async (price: Stripe.Price) => {
     throw new Error(`Could not insert/update the price ${error}`);
   }
   console.log(`Price inserted/updated: ${price.id}`);
+};
+
+// create or retrieve customer
+export const createOrRetrieveCustomer = async ({ email, uuid }: { email: string; uuid: string }) => {
+  try {
+    const response = await db.query.customers.findFirst({
+      where: (c, { eq }) => eq(c.id, uuid),
+    });
+    if (!response) throw new Error();
+    return response.stripeCustomerId;
+  } catch (error) {
+    const customerData: { metadata: { supabaseUUID: string }; email?: string } = {
+      metadata: {
+        supabaseUUID: uuid,
+      },
+    };
+    if (email) customerData.email = email;
+    try {
+      const customer = await stripe.customers.create(customerData);
+      await db.insert(customers).values({ id: uuid, stripeCustomerId: customer.id });
+      console.log(`New customer created and inserted for ${uuid}.`);
+      return customer.id;
+    } catch (stripeError) {
+      throw new Error('Could not create Customer or find the customer');
+    }
+  }
 };
