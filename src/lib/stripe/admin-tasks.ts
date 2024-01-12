@@ -1,8 +1,9 @@
 import Stripe from 'stripe';
 import { Price, Product } from '../supabase/supabase.types';
 import db from '../supabase/db';
-import { customers, prices, products } from '../../../migrations/schema';
+import { customers, prices, products, users } from '../../../migrations/schema';
 import { stripe } from './index';
+import { eq } from 'drizzle-orm';
 export const upsertProductRecord = async (product: Stripe.Product) => {
   const productData: Product = {
     id: product.id,
@@ -68,5 +69,24 @@ export const createOrRetrieveCustomer = async ({ email, uuid }: { email: string;
     } catch (stripeError) {
       throw new Error('Could not create Customer or find the customer');
     }
+  }
+};
+
+export const copyBillingDetailsToCustomer = async (uuid: string, payment_method: Stripe.PaymentMethod) => {
+  const customer = payment_method.customer as string;
+  const { name, phone, address } = payment_method.billing_details;
+  if (!name || !phone || !address) return;
+  //@ts-ignore
+  await stripe.customers.update(customer, { name, phone, address });
+  try {
+    await db
+      .update(users)
+      .set({
+        billingAddress: { ...address },
+        paymentMethod: { ...payment_method[payment_method.type] },
+      })
+      .where(eq(users.id, uuid));
+  } catch (error) {
+    throw new Error('Couldnot copy customer billing details');
   }
 };
