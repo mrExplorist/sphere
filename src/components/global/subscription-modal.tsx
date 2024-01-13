@@ -10,6 +10,7 @@ import { Price, ProductWithPrice } from '@/lib/supabase/supabase.types';
 import { useToast } from '../ui/use-toast';
 
 import { useSubscriptionModal } from '@/lib/providers/subscription-modal-provider';
+import { getStripe } from '@/lib/stripe/stripeClient';
 
 interface SubscriptionModalProps {
   products: ProductWithPrice[];
@@ -18,9 +19,8 @@ interface SubscriptionModalProps {
 const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ products }) => {
   const { open, setOpen } = useSubscriptionModal();
   const { toast } = useToast();
-  const { subscription } = useSupabaseUser();
+  const { user, subscription } = useSupabaseUser();
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useSupabaseUser();
 
   const onClickContinue = async (price: Price) => {
     try {
@@ -41,8 +41,8 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ products }) => {
       });
 
       console.log('Getting Checkout for stripe');
-      //   const stripe = await getStripe();
-      //   stripe?.redirectToCheckout({ sessionId });
+      const stripe = await getStripe();
+      stripe?.redirectToCheckout({ sessionId });
     } catch (error) {
       toast({ title: 'Oppse! Something went wrong.', variant: 'destructive' });
     } finally {
@@ -83,7 +83,7 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ products }) => {
                 </div>
               ))
             : ''}
-          No Products Available
+          {/* No Products Available */}
         </DialogContent>
       )}
     </Dialog>
