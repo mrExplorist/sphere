@@ -1,116 +1,115 @@
-import { sql } from "drizzle-orm";
-import { jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { prices, subscriptionStatus, users } from "../../../migrations/schema";
-import { integer } from "drizzle-orm/sqlite-core";
-import { boolean } from "drizzle-orm/mysql-core";
+import { relations, sql } from 'drizzle-orm';
 
-export const workspaces = pgTable("workspaces", {
-  id: uuid("id").defaultRandom().primaryKey().notNull(),
-  createdAt: timestamp("created_at", {
+import { prices, products, subscriptionStatus, users } from '../../../migrations/schema';
+
+import { boolean, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+
+export const workspaces = pgTable('workspaces', {
+  id: uuid('id').defaultRandom().primaryKey().notNull(),
+  createdAt: timestamp('created_at', {
     withTimezone: true,
-    mode: "string",
+    mode: 'string',
   })
     .defaultNow()
     .notNull(),
-  workspaceOwner: uuid("workspace_owner").notNull(),
-  title: text("title").notNull(),
-  iconId: text("icon_id").notNull(),
-  data: text("data"),
-  inTrash: text("in_trash"),
-  logo: text("logo"),
-  bannerUrl: text("banner_url"),
+  workspaceOwner: uuid('workspace_owner').notNull(),
+  title: text('title').notNull(),
+  iconId: text('icon_id').notNull(),
+  data: text('data'),
+  inTrash: text('in_trash'),
+  logo: text('logo'),
+  bannerUrl: text('banner_url'),
 });
 
-export const folders = pgTable("folders", {
-  id: uuid("id").defaultRandom().primaryKey().notNull(),
-  createdAt: timestamp("created_at", {
+export const folders = pgTable('folders', {
+  id: uuid('id').defaultRandom().primaryKey().notNull(),
+  createdAt: timestamp('created_at', {
     withTimezone: true,
-    mode: "string",
+    mode: 'string',
   })
     .defaultNow()
     .notNull(),
-  title: text("title").notNull(),
-  iconId: text("icon_id").notNull(),
-  data: text("data"),
-  inTrash: text("in_trash"),
-  bannerUrl: text("banner_url"),
-  workspaceId: uuid("workspace_id")
+  title: text('title').notNull(),
+  iconId: text('icon_id').notNull(),
+  data: text('data'),
+  inTrash: text('in_trash'),
+  bannerUrl: text('banner_url'),
+  workspaceId: uuid('workspace_id')
     .notNull()
     .references(() => workspaces.id, {
-      onDelete: "cascade",
+      onDelete: 'cascade',
     }),
 });
 
-export const files = pgTable("files", {
-  id: uuid("id").defaultRandom().primaryKey().notNull(),
-  createdAt: timestamp("created_at", {
+export const files = pgTable('files', {
+  id: uuid('id').defaultRandom().primaryKey().notNull(),
+  createdAt: timestamp('created_at', {
     withTimezone: true,
-    mode: "string",
+    mode: 'string',
   })
     .defaultNow()
     .notNull(),
-  title: text("title").notNull(),
-  iconId: text("icon_id").notNull(),
-  data: text("data"),
-  inTrash: text("in_trash"),
-  bannerUrl: text("banner_url"),
-  workspaceId: uuid("workspace_id")
+  title: text('title').notNull(),
+  iconId: text('icon_id').notNull(),
+  data: text('data'),
+  inTrash: text('in_trash'),
+  bannerUrl: text('banner_url'),
+  workspaceId: uuid('workspace_id')
     .notNull()
     .references(() => workspaces.id, {
-      onDelete: "cascade",
+      onDelete: 'cascade',
     }),
-  folderId: uuid("folder_id")
+  folderId: uuid('folder_id')
     .notNull()
     .references(() => folders.id, {
-      onDelete: "cascade",
+      onDelete: 'cascade',
     }),
 });
 
-export const subscriptions = pgTable("subscriptions", {
-  id: text("id").primaryKey().notNull(),
-  userId: uuid("user_id").notNull(),
-  status: subscriptionStatus("status"),
-  metadata: jsonb("metadata"),
-  priceId: text("price_id").references(() => prices.id),
-  quantity: integer("quantity"),
-  cancelAtPeriodEnd: boolean("cancel_at_period_end"),
-  created: timestamp("created", { withTimezone: true, mode: "string" })
+export const subscriptions = pgTable('subscriptions', {
+  id: text('id').primaryKey().notNull(),
+  userId: uuid('user_id').notNull(),
+  status: subscriptionStatus('status'),
+  metadata: jsonb('metadata'),
+  priceId: text('price_id').references(() => prices.id),
+  quantity: integer('quantity'),
+  cancelAtPeriodEnd: boolean('cancel_at_period_end'),
+  created: timestamp('created', { withTimezone: true, mode: 'string' })
     .default(sql`now()`)
     .notNull(),
-  currentPeriodStart: timestamp("current_period_start", {
+  currentPeriodStart: timestamp('current_period_start', {
     withTimezone: true,
-    mode: "string",
+    mode: 'string',
   })
     .default(sql`now()`)
     .notNull(),
-  currentPeriodEnd: timestamp("current_period_end", {
+  currentPeriodEnd: timestamp('current_period_end', {
     withTimezone: true,
-    mode: "string",
+    mode: 'string',
   })
     .default(sql`now()`)
     .notNull(),
-  endedAt: timestamp("ended_at", {
+  endedAt: timestamp('ended_at', {
     withTimezone: true,
-    mode: "string",
+    mode: 'string',
   }).default(sql`now()`),
-  cancelAt: timestamp("cancel_at", {
+  cancelAt: timestamp('cancel_at', {
     withTimezone: true,
-    mode: "string",
+    mode: 'string',
   }).default(sql`now()`),
-  canceledAt: timestamp("canceled_at", {
+  canceledAt: timestamp('canceled_at', {
     withTimezone: true,
-    mode: "string",
+    mode: 'string',
   }).default(sql`now()`),
-  trialStart: timestamp("trial_start", {
+  trialStart: timestamp('trial_start', {
     withTimezone: true,
-    mode: "string",
+    mode: 'string',
   }).default(sql`now()`),
-  trialEnd: timestamp("trial_end", {
+  trialEnd: timestamp('trial_end', {
     withTimezone: true,
-    mode: "string",
+    mode: 'string',
   }).default(sql`now()`),
 });
-
 
 // Collaborators schema
 
@@ -129,3 +128,15 @@ export const collaborators = pgTable('collaborators', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
 });
+
+//Dont Delete!!!
+export const productsRelations = relations(products, ({ many }) => ({
+  prices: many(prices),
+}));
+
+export const pricesRelations = relations(prices, ({ one }) => ({
+  product: one(products, {
+    fields: [prices.productId],
+    references: [products.id],
+  }),
+}));
