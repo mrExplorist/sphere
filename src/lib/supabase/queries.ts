@@ -55,26 +55,6 @@ export const getUser = async (userId: string) => {
   return response;
 };
 
-// GetActive Product with Price
-export const getActiveProductsWithPrice = async () => {
-  try {
-    const res = await db.query.products.findMany({
-      where: (pro, { eq }) => eq(pro.active, true),
-
-      with: {
-        prices: {
-          where: (pri: { active: any }, { eq }: any) => eq(pri.active, true),
-        },
-      },
-    });
-    if (res.length) return { data: res, error: null };
-    return { data: [], error: null };
-  } catch (error) {
-    console.log(error);
-    return { data: [], error };
-  }
-};
-
 // Query for getting files
 export const getFiles = async (folderId: string) => {
   const isValid = validate(folderId);
@@ -352,5 +332,25 @@ export const getFileDetails = async (fileId: string) => {
   } catch (error) {
     console.log('🔴Error', error);
     return { data: [], error: 'Error' };
+  }
+};
+
+// GetActive Product with Price
+export const getActiveProductsWithPrice = async () => {
+  try {
+    const res = await db.query.products.findMany({
+      where: (pro, { eq }) => eq(pro.active, true),
+
+      with: {
+        prices: {
+          where: (pri, { eq }) => eq(pri.active, true),
+        },
+      },
+    });
+    if (res.length) return { data: res, error: null };
+    return { data: [], error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: [], error };
   }
 };
