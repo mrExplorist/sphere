@@ -4,8 +4,9 @@ import { twMerge } from 'tailwind-merge';
 import SphereHomeIcon from '../icons/sphereHomeIcon';
 import SphereSettingsIcon from '../icons/sphereSettingsIcon';
 import SphereTrashIcon from '../icons/sphereTrashIcon';
-// import Settings from '../settings/settings';
-// import Trash from '../trash/trash';
+import Settings from '../settings/settings';
+
+import Trash from '../trash/trash';
 
 interface NativeNavigationProps {
   myWorkspaceId: string;
@@ -31,34 +32,34 @@ const NativeNavigation: React.FC<NativeNavigationProps> = ({ myWorkspaceId, clas
           </Link>
         </li>
 
-        {/* {/* <Settings> */}
-        <li
-          className="group/native
+        <Settings>
+          <li
+            className="group/native
             flex
             text-Neutrals/neutrals-7
             transition-all
             gap-2
             cursor-pointer
           "
-        >
-          <SphereSettingsIcon />
-          <span>Settings</span>
-        </li>
-        {/* </Settings> */}
+          >
+            <SphereSettingsIcon />
+            <span>Settings</span>
+          </li>
+        </Settings>
 
-        {/* <Trash> */}
-        <li
-          className="group/native
+        <Trash>
+          <li
+            className="group/native
             flex
             text-Neutrals/neutrals-7
             transition-all
             gap-2
           "
-        >
-          <SphereTrashIcon />
-          <span>Trash</span>
-        </li>
-        {/* </Trash> */}
+          >
+            <SphereTrashIcon />
+            <span>Trash</span>
+          </li>
+        </Trash>
       </ul>
     </nav>
   );
