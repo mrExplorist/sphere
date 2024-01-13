@@ -43,6 +43,7 @@ import Link from 'next/link';
 import SphereProfileIcon from '../icons/sphereProfileIcon';
 import LogoutButton from '../global/logout-button';
 import { useSubscriptionModal } from '@/lib/providers/subscription-modal-provider';
+import { postData } from '@/lib/utils';
 
 const SettingsForm = () => {
   const { toast } = useToast();
@@ -63,9 +64,28 @@ const SettingsForm = () => {
 
   //WIP PAYMENT PORTAL
 
+  const redirectToCustomerPortal = async () => {
+    setLoadingPortal(true);
+    try {
+      const { url, error } = await postData({
+        url: '/api/create-portal-link',
+      });
+      window.location.assign(url);
+    } catch (error) {
+      console.log(error);
+      setLoadingPortal(false);
+    }
+    setLoadingPortal(false);
+  };
+
   //addcollborators
   const addCollaborator = async (profile: User) => {
     if (!workspaceId) return;
+    if (subscription?.status !== 'active' && collaborators.length >= 2) {
+      toast({ title: 'You need to be on a Pro Plan to add more collaborators' });
+      setOpen(true);
+      return;
+    }
 
     await addCollaborators([profile], workspaceId);
     setCollaborators([...collaborators, profile]);
@@ -339,7 +359,7 @@ const SettingsForm = () => {
               type="file"
               accept="image/*"
               placeholder="Profile Picture"
-              // onChange={onChangeProfilePicture}
+              //   onChange={onChangeProfilePicture}
               disabled={uploadingProfilePic}
             />
           </div>
@@ -369,7 +389,7 @@ const SettingsForm = () => {
               variant={'secondary'}
               disabled={loadingPortal}
               className="text-sm"
-              //   onClick={redirectToCustomerPortal}
+              onClick={redirectToCustomerPortal}
             >
               Manage Subscription
             </Button>
