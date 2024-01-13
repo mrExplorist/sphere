@@ -257,6 +257,10 @@ const HomePage = () => {
         className="mt-20
         px-4
         sm:px-6
+
+        mb-4
+        p-4
+
       "
       >
         <TitleSection
