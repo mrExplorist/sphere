@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import './globals.css';
+import '../styles/globals.css';
 import db from '@/lib/supabase/db';
 import { ThemeProvider } from '../lib/providers/next-theme-provider';
 

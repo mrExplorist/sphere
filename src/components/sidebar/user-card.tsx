@@ -4,11 +4,11 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import db from '@/lib/supabase/db';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import SphereProfileIcon from '../icons/sphereProfileIcon';
 
-import { LogOut } from 'lucide-react';
 import ModeToggle from '../global/mode-toggle';
+import { LogOut } from 'lucide-react';
 import LogoutButton from '../global/logout-button';
+import SphereProfileIcon from '../icons/sphereProfileIcon';
 
 interface UserCardProps {
   subscription: Subscription | null;

@@ -53,6 +53,11 @@ var TOOLBAR_OPTIONS = [
   [{ align: [] }],
 
   ['clean'], // remove formatting button
+  //   for code highlighting
+
+  [{ formula: [] }],
+  [{ image: [] }],
+  [{ video: [] }],
 ];
 
 const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }) => {
@@ -149,6 +154,9 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
       const editor = document.createElement('div');
       wrapper.append(editor);
       const Quill = (await import('quill')).default;
+
+      //   for code highlighting hljs
+
       const QuillCursors = (await import('quill-cursors')).default;
       Quill.register('modules/cursors', QuillCursors);
 
@@ -156,6 +164,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
         theme: 'snow',
         modules: {
           toolbar: TOOLBAR_OPTIONS,
+
           cursors: {
             transformOnTextChange: true,
           },
@@ -390,6 +399,8 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId, dirType }
       }
     };
     socket.on('receive-cursor-move', socketHandler);
+
+    // Quick cleanup function for socket handler when component unmounts
     return () => {
       socket.off('receive-cursor-move', socketHandler);
     };

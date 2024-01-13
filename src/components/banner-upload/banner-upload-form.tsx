@@ -33,6 +33,9 @@ const BannerUploadForm: React.FC<BannerUploadFormProps> = ({ dirType, id, detail
       banner: '',
     },
   });
+
+  // after updating and uploading of banner in db navigate to the workspace or folder or file
+  // depending on the dirType
   const onSubmitHandler: SubmitHandler<z.infer<typeof UploadBannerFormSchema>> = async (values) => {
     const file = values.banner?.[0];
     if (!file || !id) return;
@@ -83,7 +86,9 @@ const BannerUploadForm: React.FC<BannerUploadFormProps> = ({ dirType, id, detail
         });
         await updateWorkspace({ bannerUrl: filePath }, id);
       }
-    } catch (error) {}
+    } catch (error) {
+      console.log(error);
+    }
   };
   return (
     <form onSubmit={handleSubmit(onSubmitHandler)} className="flex flex-col gap-2">

@@ -50,12 +50,12 @@ const WorkspaceCreator = () => {
         bannerUrl: '',
       };
       if (permissions === 'private') {
-        toast({ title: 'Success', description: 'Created the workspace' });
+        toast({ title: 'Success', description: '✅ Created the private workspace' });
         await createWorkspace(newWorkspace);
         router.refresh();
       }
       if (permissions === 'shared') {
-        toast({ title: 'Success', description: 'Created the workspace' });
+        toast({ title: 'Success', description: '✅ Created the collaborative workspace' });
         await createWorkspace(newWorkspace);
         await addCollaborators(collaborators, uuid);
         router.refresh();
