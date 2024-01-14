@@ -8,9 +8,9 @@ interface LayoutProps {
 }
 const Layout: React.FC<LayoutProps> = async ({ children, params }) => {
   const { data: products, error } = await getActiveProductsWithPrice();
-
-  if (error) throw new Error(JSON.stringify(error));
-
+  if (error) {
+    console.log(error);
+  }
   return (
     <main className="flex h-screen ">
       <SubscriptionModalProvider products={products}>{children}</SubscriptionModalProvider>
